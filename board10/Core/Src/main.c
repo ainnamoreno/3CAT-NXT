@@ -160,7 +160,8 @@ int main(void)
 			else if(comms_state); //telecommand(); 	        /* function that receives orders from "COMMS" */
 			//else if(comms_timer_state) sendtelemetry(); /* loop that sends the telemetry data to "COMMS" */
 			//comms_state = false;
-			comms_timer_state = true;
+			comms_timer_state = false;
+			//comms_timer_state = false;	//Descomentar aixo
 			currentState = IDLE;
 			break;
 			//HAL_FLASH_Program(TypeProgram, Adress, Data); //todo: comprovar HAL
