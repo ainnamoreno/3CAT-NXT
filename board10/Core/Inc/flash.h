@@ -11,6 +11,7 @@
 #include "stdint.h"
 
 #define PHOTO_ADDR 0x08010000
+#define COMMS_VARIABLE 0x08009000
 
 uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofwords);
 

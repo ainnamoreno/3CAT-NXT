@@ -119,11 +119,11 @@ int main(void)
   MX_USB_OTG_FS_HCD_Init();
   /* USER CODE BEGIN 2 */
 
-  	Flash_Write_Data(0x0800C000, payload_state);
+  	//Flash_Write_Data(0x0800C000, payload_state);
 
   	Flash_Read_Data(0x0800C000, payload_lect, 1);
   	comms_state[0] = 0x66666666;
-  	Flash_Write_Data(0x0800C010, comms_state);
+  	//Flash_Write_Data(0x0800C010, comms_state);
   	Flash_Read_Data(0x0800C010, comms_lect, 1);
   //  temp.fields.temp1 = 0x1A;
   //  temp.fields.temp3 = 0x8F;

@@ -9,6 +9,18 @@
 #define INC_COMMS_H_
 
 
+#include <radio.h>
+#include <sx126x.h>
+#include <flash.h>
+
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <inttypes.h>
+#include <math.h>
+
 /*This are COMMS definitions*/
 #define RF_FREQUENCY 						868000000  	// 868 MHz
 #define TX_OUTPUT_POWER 					22          // 22 dBm

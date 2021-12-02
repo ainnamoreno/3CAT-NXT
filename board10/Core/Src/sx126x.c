@@ -20,21 +20,9 @@
  *
  * \author    Gregory Cristian ( Semtech )
  */
-#include <math.h>
-//#include "board.h"
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
 
-#include <sx126x.h>
-#include <stdbool.h>
 
-#include <gpio.h>
-#include <spi.h>
-
-//#include "sx126x-board.h"
+#include "sx126x.h"
 
 /*!
  * \brief Radio registers definition

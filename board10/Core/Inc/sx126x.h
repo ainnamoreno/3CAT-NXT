@@ -23,17 +23,25 @@
 #ifndef __SX126x_H__
 #define __SX126x_H__
 
-#include <stdbool.h>
-#include <stdint.h>
 #include <inttypes.h>
 #include "timer.h"
 #include "delay.h"
-#include "gpio.h"
-#include "spi.h"
+
 //#include "uart.h"
 #include "stm32f4xx_hal.h"
 
+#include <math.h>
+//#include "board.h"
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
 
+#include <stdbool.h>
+
+#include <gpio.h>
+#include <spi.h>
 
 
 #define SX1261                                      1

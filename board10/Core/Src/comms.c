@@ -1,15 +1,6 @@
 #include <comms.h>
 
-#include <radio.h>
-#include <sx126x.h>
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <inttypes.h>
-#include <math.h>
 
 //#include "sx126x-hal.h"
 
@@ -19,8 +10,8 @@ static RadioEvents_t RadioEvents;	//SHOULD THIS BE IN MAIN??? IS TO HANDLE IRQ??
 uint32_t air_time;
 uint8_t Buffer[BUFFER_SIZE];
 //uint64_t BufferWindow[WINDOW_SIZE];	//If there is RAM memory problems => delete
-uint8_t count_packet;	//To count how many packets have been sent (maximum WINDOW_SIZE)
-uint8_t count_window;	//To count the window number
+uint8_t count_packet[] = {};	//To count how many packets have been sent (maximum WINDOW_SIZE)
+uint8_t count_window[] = {};	//To count the window number
 uint64_t ack;	//Information rx in the ACK (FER DESPLAÇAMENTS DSBM)
 bool nack;	//True when retransmition necessary
 
@@ -68,8 +59,8 @@ void configuration(void){
 	//Air time calculus
 	air_time = Radio.TimeOnAir( MODEM_LORA , PACKET_LENGTH );
 
-	count_packet = 0;
-	count_window = 0;
+	Flash_Read_Data( COMMS_VARIABLE , count_packet , sizeof(count_packet) );
+	Flash_Read_Data( COMMS_VARIABLE + 0x1 , count_window , sizeof(count_window) );
 	ack = 0xFFFFFFFFFFFFFFFF;
 	nack = false;
 
@@ -98,5 +89,12 @@ void packaging(void){
 
 	//ii)
 
+	Flash_Read_Data( PHOTO_ADDR , Buffer , sizeof(Buffer) );	//Direction in HEX
+
 };
+
+void resetCommsParams(void){
+
+
+}
 
