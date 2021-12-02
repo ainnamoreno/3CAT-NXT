@@ -29,14 +29,20 @@
 #define TAKEPHOTO 			02	/*Might rotate the PQ into the right position +
 								wait until it is in the position where the picture is wanted to be taken.*/
 #define TAKERF  			03
-#define RESET2  				04	/*The PQ might take a reset*/
-#define SPECIFICTELEMETRY  	05
+#define RESET2  			04	/*The PQ might take a reset*/
+#define SENDTELEMETRY  		05
 #define STOPSENDINGDATA  	06
 #define ACKDATA  			07	/*It is received when all the data is received correctly*/
-#define NACKDATA  			08	/*If it is received if the GS do not receive all the segments of the data.
- 	 	 	 	 	 	 	 	 *The PQ will send since the last segment received correctly.*/
+//#define NACKDATA  			08	/*If it is received if the GS do not receive all the segments of the data.
+ 	 	 	 	 	 	 	 	 //*The PQ will send since the last segment received correctly.*/
 #define TLE  				09 /*Packet from GS with the new TLE, update it inside memory
  	 	 	 	 	 	 	 	  the SPG4 uses it to propagate the orbit*/
+#define SET_SF				10
+#define SET_CRC				11
+#define SET_CONSTANT_KP		12
+#define SET_PHOTO_RESOLUTION	13
+#define
+#define
 #define NOMINAL				90
 #define LOW					85
 #define CRITICAL			80

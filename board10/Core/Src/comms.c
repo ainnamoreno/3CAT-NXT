@@ -1,6 +1,15 @@
 #include <comms.h>
 
-
+/*------IMPORTANT----------*/
+/*
+ * STATE CONTINGENCY ONLY RX
+ * CHECK SLEEP MODE OF SX1262 WHILE NOT TX OR RX
+ * MULTY THREAD
+ * MATRIX OF READ-SALOMON => FADING IN SEVERAL PACKETS
+ * SF AND CRC STORED IN MEMORY AND CHANGED BY TELECOMMANDS
+ * send sf and crc at telemetry packet
+ * THINK TELEMETRY PACKET!!!!!!!!!!
+ */
 
 //#include "sx126x-hal.h"
 
@@ -10,8 +19,8 @@ static RadioEvents_t RadioEvents;	//SHOULD THIS BE IN MAIN??? IS TO HANDLE IRQ??
 uint32_t air_time;
 uint8_t Buffer[BUFFER_SIZE];
 //uint64_t BufferWindow[WINDOW_SIZE];	//If there is RAM memory problems => delete
-uint8_t count_packet[] = {};	//To count how many packets have been sent (maximum WINDOW_SIZE)
-uint8_t count_window[] = {};	//To count the window number
+uint8_t count_packet[] = {0};	//To count how many packets have been sent (maximum WINDOW_SIZE)
+uint8_t count_window[] = {0};	//To count the window number
 uint64_t ack;	//Information rx in the ACK (FER DESPLAÇAMENTS DSBM)
 bool nack;	//True when retransmition necessary
 
@@ -59,8 +68,8 @@ void configuration(void){
 	//Air time calculus
 	air_time = Radio.TimeOnAir( MODEM_LORA , PACKET_LENGTH );
 
-	Flash_Read_Data( COMMS_VARIABLE , count_packet , sizeof(count_packet) );
-	Flash_Read_Data( COMMS_VARIABLE + 0x1 , count_window , sizeof(count_window) );
+	Flash_Read_Data( COMMS_VARIABLE , count_packet , sizeof(count_packet) );	//Read from Flash count_packet
+	Flash_Read_Data( COMMS_VARIABLE + 0x1 , count_window , sizeof(count_window) ); //Read from Flash count_window
 	ack = 0xFFFFFFFFFFFFFFFF;
 	nack = false;
 
@@ -89,9 +98,12 @@ void packaging(void){
 
 	//ii)
 
-	Flash_Read_Data( PHOTO_ADDR , Buffer , sizeof(Buffer) );	//Direction in HEX
+	Flash_Read_Data( PHOTO_ADDR + count_window[0]*WINDOW_SIZE*BUFFER_SIZE + count_packet[0]*BUFFER_SIZE , Buffer , sizeof(Buffer) );	//Direction in HEX
 
 };
+
+// count_packet[] = {};	//To count how many packets have been sent (maximum WINDOW_SIZE)
+// count_window[] = {};	//To count the window number
 
 void resetCommsParams(void){
 
