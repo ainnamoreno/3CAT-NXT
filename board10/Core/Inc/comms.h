@@ -70,6 +70,15 @@
 #define BUFFER_SIZE                         38 			// Define the payload size here
 #define WINDOW_SIZE							40
 
+//CHECK THIS DEFINITIONS (I DO NOT KNOW IF THEY ARE CORRECT OR WHICH VALUE TO USE)
+#define CAD_TIMER_TIMEOUT       1000        //Define de CAD timer's timeout here
+#define RX_TIMER_TIMEOUT        4000        //Define de CAD timer's timeout here
+#define CAD_SYMBOL_NUM          LORA_CAD_02_SYMBOL
+#define CAD_DET_PEAK            22
+#define CAD_DET_MIN             10
+#define CAD_TIMEOUT_MS          2000
+#define NB_TRY                  10
+
 
 /* MAYBE IT COULD BE INTERESTING TO USE A STATE MACHINE IN COMMS*/
 /* OR MAYBE THIS SHOULD BE HANDLED IN MAIN, OR COMMS IS A SINGLE FUNCTION WITH STATES */

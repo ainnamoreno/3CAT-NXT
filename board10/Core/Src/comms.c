@@ -35,6 +35,7 @@
  * send sf and crc at telemetry packet
  * THINK TELEMETRY PACKET!!!!!!!!!!
  * If stop sending in the middle of a window => set to zero count_packet[]
+ * CAD_TIMER_TIMEOUT => CHANGE THE VALUE IN COMMS.H (and the next 6 definitions too)
  */
 
 //#include "sx126x-hal.h"
@@ -164,6 +165,8 @@ void tx_function(void){
 	}
 };
 
+
+/* I THINK THAT THIS FUNCTION IS NOT NEEDED*/
 void rx_function(void){
 	Radio.Rx( RX_TIMEOUT_VALUE );
 
@@ -194,13 +197,8 @@ void packaging(void){
 			full_window = true;
 		}
 	}
-	//ii)
-
-
 };
 
-// count_packet[] = {};	//To count how many packets have been sent (maximum WINDOW_SIZE)
-// count_window[] = {};	//To count the window number
 
 /*This function is called when a new photo is stored in the last photo position*/
 void resetCommsParams(void){
@@ -212,6 +210,26 @@ void resetCommsParams(void){
 
 void stateMachine(void){
     uint16_t PacketCnt = 0;
+
+    RadioEvents.TxDone = OnTxDone;
+    RadioEvents.RxDone = OnRxDone;
+    RadioEvents.TxTimeout = OnTxTimeout;
+    RadioEvents.RxTimeout = OnRxTimeout;
+    RadioEvents.RxError = OnRxError;
+    RadioEvents.CadDone = OnCadDone;
+
+    //Timer used to restart the CAD
+    TimerInit( &CADTimeoutTimer, CADTimeoutTimeoutIrq );
+    TimerSetValue( &CADTimeoutTimer, CAD_TIMER_TIMEOUT );
+
+    //App timmer used to check the RX's end
+    TimerInit( &RxAppTimeoutTimer, RxTimeoutTimerIrq );
+    TimerSetValue( &RxAppTimeoutTimer, RX_TIMER_TIMEOUT );
+
+    configuration();
+
+    SX126xConfigureCad( CAD_SYMBOL_NUM, CAD_DET_PEAK,CAD_DET_MIN, CAD_TIMEOUT_MS);      // Configure the CAD
+    Radio.StartCad( );                                                                  // do the config and lunch first CAD
 
     switch( State )
     {
@@ -239,27 +257,25 @@ void stateMachine(void){
             if( PacketReceived == true )
             {
                 PacketReceived = false;     // Reset flag
-                if((Buffer[0]=='C') && (Buffer[1]=='A') && (Buffer[2]=='D'))
-                {
-                    PacketCnt = (Buffer[4] << 8) + Buffer[5];   // ID packet
-                    RxCorrectCnt++;         // Update RX counter
-					#if(FULL_DBG)
-                    	printf( "Rx Packet n %d\r\n", PacketCnt );
-					#endif
-                }
-            State = START_CAD;
+                RxCorrectCnt++;         // Update RX counter
+				#if(FULL_DBG)
+					printf( "Rx Packet n %d\r\n", PacketCnt );
+				#endif
+                State = START_CAD;
             }
             else
             {
                 if (CadRx == CAD_SUCCESS)
                 {
+                	//PUT HERE THE CODE TO WITHDRAW THE INFO FROM THE BUFFER
+
                     //channelActivityDetectedCnt++;   // Update counter
 					#if(FULL_DBG)
                     	printf( "Rxing\r\n");
 					#endif
                     RxTimeoutTimerIrqFlag = false;
                     TimerReset(&RxAppTimeoutTimer);	// Start the Rx's's Timer
-                    Radio.Rx( RX_TIMEOUT_VALUE );   // CAD is detected, Start RX
+                    Radio.Rx( RX_TIMEOUT_VALUE );
                 }
                 else
                 {
@@ -272,15 +288,6 @@ void stateMachine(void){
         case TX:
         {
             printf("Send Packet n %d \r\n",PacketCnt);
-
-            // Send the next frame
-            Buffer[0] = 'C';
-            Buffer[1] = 'A';
-            Buffer[2] = 'D';
-            Buffer[3] = '0';
-            Buffer[4] = PacketCnt>>8;
-            Buffer[5] = (uint8_t)PacketCnt ;
-
             if( PacketCnt == 0xFFFF)
             {
                 PacketCnt = 0;
@@ -291,8 +298,7 @@ void stateMachine(void){
             }
             //Send Frame
             DelayMs( 1 );
-            Radio.Send( Buffer, 6 );
-
+            tx_function();
             State = LOWPOWER;
             break;
         }
@@ -313,7 +319,7 @@ void stateMachine(void){
 				#endif
             }
             CadRx = CAD_FAIL;           // Reset CAD flag
-            DelayMs(randr(10,500));     //Add a random delay for the PER test
+            DelayMs(randr(10,500));     //Add a random delay for the PER test => CHECK THIS WARNING
 			#if(FULL_DBG)
             	printf("CAD %d\r\n",i);
 			#endif
