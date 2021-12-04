@@ -41,8 +41,8 @@
 #define SET_CRC				11
 #define SET_CONSTANT_KP		12
 #define SET_PHOTO_RESOLUTION	13
-#define
-#define
+//#define
+//#define
 #define NOMINAL				90
 #define LOW					85
 #define CRITICAL			80

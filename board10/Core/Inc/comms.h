@@ -1,8 +1,26 @@
-/*
- * comms.h
+
+/*!
+ * \file      comms.h
  *
- *  Created on: Nov 17, 2021
- *      Author: Daniel Herencia Ruiz
+ * \brief     Comms subsytem functions
+ *
+ *
+ *
+ * \code
+ *
+ * 				 _______    ______    ____    ____    ____    ____     ______
+ * 				/ ______)  /  __  \  |    \  /    |  |    \  /    |   / _____)
+ * 			   / /         | |  | |  |  \  \/  /  |  |  \  \/  /  |  ( (____
+ *            ( (          | |  | |  |  |\    /|  |  |  |\    /|  |   \____ \
+ *             \ \______   | |__| |  |  | \__/ |  |  |  | \__/ |  |   _____) )
+ *              \_______)  \______/  |__|      |__|  |__|      |__|  (______/
+ *
+ *
+ * \endcode
+ *
+ * \author    Daniel Herencia
+ *
+ * \author    Robert Molina
  */
 
 #ifndef INC_COMMS_H_
@@ -78,6 +96,82 @@ void tx_function(void);
 void rx_function(void);
 
 void packaging(void);
+
+void stateMachine(void);
+
+
+/*
+ * FUNCTIONS OBTAINED FROM EXAMPLE MAIN.C
+ */
+
+
+/*!
+ * \brief Function to be executed on Radio Tx Done event
+ */
+void OnTxDone( void );
+
+/*!
+ * \brief Function to be executed on Radio Rx Done event
+ */
+void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr );
+
+/*!
+ * \brief Function executed on Radio Tx Timeout event
+ */
+void OnTxTimeout( void );
+
+/*!
+ * \brief Function executed on Radio Rx Timeout event
+ */
+void OnRxTimeout( void );
+
+/*!
+ * \brief Function executed on Radio Rx Error event
+ */
+void OnRxError( void );
+
+/*!
+ * \brief Function executed on Radio CAD Done event
+ */
+void OnCadDone( bool channelActivityDetected);
+
+/*!
+ * \brief Function configuring CAD parameters
+ * \param [in]  cadSymbolNum   The number of symbol to use for CAD operations
+ *                             [LORA_CAD_01_SYMBOL, LORA_CAD_02_SYMBOL,
+ *                              LORA_CAD_04_SYMBOL, LORA_CAD_08_SYMBOL,
+ *                              LORA_CAD_16_SYMBOL]
+ * \param [in]  cadDetPeak     Limit for detection of SNR peak used in the CAD
+ * \param [in]  cadDetMin      Set the minimum symbol recognition for CAD
+ * \param [in]  cadTimeout     Defines the timeout value to abort the CAD activity
+ */
+void SX126xConfigureCad( RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin , uint32_t cadTimeout);
+
+/*!
+ * \brief CAD timeout timer callback
+ */
+static void CADTimeoutTimeoutIrq( void );
+
+/*!
+ * \brief Rx timeout timer callback
+ */
+static void RxTimeoutTimerIrq( void );
+
+/*!
+ * \brief Average the collected RSSIs during CAD
+ */
+int8_t AverageCadRssi( void );
+
+/*!
+ * \brief Get the last good RSSI during CAD
+ */
+int8_t GetLastCadRssi( void );
+
+/*!
+ * \brief Display collected RSSIs each ms during CAD
+ */
+void DisplayCadRssivsTime( void );
+
 
 
 
