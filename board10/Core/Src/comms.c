@@ -52,6 +52,7 @@ uint8_t Buffer[BUFFER_SIZE];
 uint8_t count_packet[] = {0};	//To count how many packets have been sent (maximum WINDOW_SIZE)
 uint8_t count_window[] = {0};	//To count the window number
 uint8_t count_rtx[] = {0};		//To count the number of retransmitted packets
+uint8_t i = 0;					//Auxiliar variable for loop
 
 uint64_t ack;					//Information rx in the ACK (FER DESPLAÇAMENTS DSBM)
 uint8_t nack_number;			//Number of the current packet to retransmit
@@ -177,13 +178,19 @@ void packaging(void){
 
 	if (nack)
 	{
-		//Here a function to obtain the packets to retx
-		nack_number = 1/*ACK*/;	//Delete the 1 and put a function in ack to obtain the number
-		//Packet from last window => count_window - 1
-		Flash_Read_Data( PHOTO_ADDR + (count_window[0]-1)*WINDOW_SIZE*BUFFER_SIZE + (nack_number)*BUFFER_SIZE , Buffer , sizeof(Buffer) );	//Direction in HEX
-		count_rtx[0]++;
+		for(i=0; i<sizeof(ack); i++)
+		{
+			//function to obtain the packets to retx
+			if(!((ack >> i) & 1)) //When position of the ack & 1 != 1 --> its a 0 --> NACK
+			{
+				nack_number = i/*ACK*/;	//Delete the 1 and put a function in ack to obtain the number
+				//Packet from last window => count_window - 1
+				Flash_Read_Data( PHOTO_ADDR + (count_window[0]-1)*WINDOW_SIZE*BUFFER_SIZE + (nack_number)*BUFFER_SIZE , Buffer , sizeof(Buffer) );	//Direction in HEX
+				count_rtx[0]++;
+			}
+		}
 	}
-	else
+	else //no NACKS
 	{
 		Flash_Read_Data( PHOTO_ADDR + count_window[0]*WINDOW_SIZE*BUFFER_SIZE + (count_packet[0]-count_rtx[0])*BUFFER_SIZE , Buffer , sizeof(Buffer) );	//Direction in HEX
 		if (count_packet[0] < WINDOW_SIZE - 1)
