@@ -193,17 +193,25 @@ int main(void)
 			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
 			break;
 
-		case CONTINGENCY:
-			/*Turn STM32 to Stop Mode or Standby Mode
-			 *Loop to check at what batterylevel are we
-			 *Out of CONTINGENCY State when batterylevel is NOMINAL
-			 *todo CHECK IF WE CAN EXECUTE SOME TASKS OR NOT IN STANDBY MODE*/
-			 //while(checkbatteries() /= NOMINAL){
-			 //}
-			 /*Return to Run Mode*/
-			 currentState = IDLE;
-			 //Una opció és fer reset total del satelit quan surti de contingency
+		case CONTINGENCY: //we will enter the Low Power Run mode in this state, CPU will be on but I2C will no longer be available
+
+			enter_LPRunMode();
+
+
+
 			break;
+
+		case SUNSAFE: //we will enter the SleepMode, so the CPU will no longer be ON, on the ohter hand the I2C is available
+
+
+
+			break;
+
+		case SURVIVAL: //we will enter the Low Power Sleep mode,
+
+
+			break;
+
 		/*If we reach this state something has gone wrong*/
 		default:
 			/*REBOOT THE SYSTEM*/
