@@ -25,21 +25,50 @@
 #define DELAY_CAMERA 2500 /*Initial operation process*/
 
 /*Telecommands*/
-#define SENDDATA  			01	/*If the acquired photo or spectogram is needed to be send to GS*/
-#define TAKEPHOTO 			02	/*Might rotate the PQ into the right position +
+
+/*OBC*/
+#define RESET2  			01	/*The PQ might take a reset*/
+#define NOMINAL				02
+#define LOW					03
+#define CRITICAL			04
+
+//#define NACKDATA  			08	/*If it is received if the GS do not receive all the segments of the data.
+ 	 	 	 	 	 	 	 	 //*The PQ will send since the last segment received correctly.*/
+/*ADCS*/
+#define SET_CONSTANT_KP		10
+#define TLE  				11 /*Packet from GS with the new TLE, update it inside memory
+ 	 	 	 	 	 	 	  the SPG4 uses it to propagate the orbit*/
+
+
+/*COMMS*/
+#define SENDDATA  			20	/*If the acquired photo or spectogram is needed to be send to GS*/
+#define SENDTELEMETRY  		21
+#define STOPSENDINGDATA  	22
+#define ACKDATA  			23	/*It is received when all the data is received correctly*/
+#define SET_SF				24
+#define SET_CRC				25
+
+/*CAMARA*/
+#define TAKEPHOTO 			30	/*Might rotate the PQ into the right position +
 								wait until it is in the position where the picture is wanted to be taken.*/
-#define TAKERF  			03
-#define RESET2  				04	/*The PQ might take a reset*/
-#define SPECIFICTELEMETRY  	05
-#define STOPSENDINGDATA  	06
-#define ACKDATA  			07	/*It is received when all the data is received correctly*/
-#define NACKDATA  			08	/*If it is received if the GS do not receive all the segments of the data.
- 	 	 	 	 	 	 	 	 *The PQ will send since the last segment received correctly.*/
-#define TLE  				09 /*Packet from GS with the new TLE, update it inside memory
- 	 	 	 	 	 	 	 	  the SPG4 uses it to propagate the orbit*/
-#define NOMINAL				90
-#define LOW					85
-#define CRITICAL			80
+#define SET_PHOTO_RESOL		31	//Photo Resolution
+#define PHOTO_COMPRESSION   32
+
+/*PAYLOAD 2: ELECTROSMOG ANTENNA*/
+#define TAKERF  			40
+#define F_MIN				41
+#define F_MAX				42
+#define DELTA_F				43
+#define INTEGRATION_TIME	44
+
+
+#define SEND_CONFIG			50	//Send all configuration
+
+
+
+//#define
+//#define
+
 
 /*NOMINAL from 100 to 90, LOW from 90 to 85, CRITICAL from 85 to 80 (only to give us an idea*/
 //enum BatteryLevel {NOMINAL=90, LOW=85, CRITICAL=80, SURVIVAL=0}; //todo talk EPS

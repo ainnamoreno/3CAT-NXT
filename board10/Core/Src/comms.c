@@ -1,23 +1,110 @@
+
+/*!
+ * \file      comms.c
+ *
+ * \brief     Comms subsytem functions
+ *
+ *
+ *
+ * \code
+ *
+ * 				 _______    ______    ____    ____    ____    ____     ______
+ * 				/ ______)  /  __  \  |    \  /    |  |    \  /    |   / _____)
+ * 			   / /         | |  | |  |  \  \/  /  |  |  \  \/  /  |  ( (____
+ *            ( (          | |  | |  |  |\    /|  |  |  |\    /|  |   \____ \
+ *             \ \______   | |__| |  |  | \__/ |  |  |  | \__/ |  |   _____) )
+ *              \_______)  \______/  |__|      |__|  |__|      |__|  (______/
+ *
+ *
+ * \endcode
+ *
+ * \author    Daniel Herencia
+ *
+ * \author    Robert Molina
+ */
+
 #include <comms.h>
 
-
+/*------IMPORTANT----------*/
+/*
+ * STATE CONTINGENCY ONLY RX
+ * CHECK SLEEP MODE OF SX1262 WHILE NOT TX OR RX
+ * MULTY THREAD
+ * MATRIX OF READ-SALOMON => FADING IN SEVERAL PACKETS
+ * SF AND CRC STORED IN MEMORY AND CHANGED BY TELECOMMANDS
+ * send sf and crc at telemetry packet
+ * THINK TELEMETRY PACKET!!!!!!!!!!
+ * If stop sending in the middle of a window => set to zero count_packet[]
+ * CAD_TIMER_TIMEOUT => CHANGE THE VALUE IN COMMS.H (and the next 6 definitions too)
+ */
 
 //#include "sx126x-hal.h"
 
 static RadioEvents_t RadioEvents;	//SHOULD THIS BE IN MAIN??? IS TO HANDLE IRQ???
 
-//HOW TO USE GLOBAL VARIABLE NOT-STATIC???? => IT DO NOT COMPILE
 uint32_t air_time;
 uint8_t Buffer[BUFFER_SIZE];
-//uint64_t BufferWindow[WINDOW_SIZE];	//If there is RAM memory problems => delete
-uint8_t count_packet[] = {};	//To count how many packets have been sent (maximum WINDOW_SIZE)
-uint8_t count_window[] = {};	//To count the window number
-uint64_t ack;	//Information rx in the ACK (FER DESPLAÇAMENTS DSBM)
-bool nack;	//True when retransmition necessary
+
+/*
+ * To avoid the variables being erased if a reset occurs, we have to store them in the Flash memory
+ * Therefore, they have to be declared as a single-element array
+ */
+uint8_t count_packet[] = {0};	//To count how many packets have been sent (maximum WINDOW_SIZE)
+uint8_t count_window[] = {0};	//To count the window number
+uint8_t count_rtx[] = {0};		//To count the number of retransmitted packets
+uint8_t i = 0;					//Auxiliar variable for loop
+
+uint64_t ack;					//Information rx in the ACK (FER DESPLAÇAMENTS DSBM)
+uint8_t nack_number;			//Number of the current packet to retransmit
+bool nack;						//True when retransmition necessary
+bool full_window;				//Stop & wait => to know when we reach the limit packet of the window
 
 //uint8_t Buffer[BUFFER_SIZE];
 //bool PacketReceived = false;
 //bool RxTimeoutTimerIrqFlag = false;
+
+
+/*
+ * STATE MACHINE VARIABLES
+ */
+typedef enum
+{
+    LOWPOWER,
+    RX,
+    RX_TIMEOUT,
+    RX_ERROR,
+    TX,
+    TX_TIMEOUT,
+    START_CAD,
+}States_t;
+
+typedef enum
+{
+    CAD_FAIL,
+    CAD_SUCCESS,
+    PENDING,
+}CadRx_t;
+
+States_t State = LOWPOWER;
+
+int8_t RssiValue = 0;
+int8_t SnrValue = 0;
+
+CadRx_t CadRx = CAD_FAIL;
+bool PacketReceived = false;
+bool RxTimeoutTimerIrqFlag = false;
+int16_t RssiMoy = 0;
+int8_t SnrMoy = 0;
+uint16_t RxCorrectCnt = 0;
+uint16_t BufferSize = BUFFER_SIZE;
+
+
+TimerEvent_t CADTimeoutTimer;
+TimerEvent_t RxAppTimeoutTimer;
+
+/*
+ *  ---------------- END ----------------
+ */
 
 void configuration(void){
 	/*
@@ -59,10 +146,12 @@ void configuration(void){
 	//Air time calculus
 	air_time = Radio.TimeOnAir( MODEM_LORA , PACKET_LENGTH );
 
-	Flash_Read_Data( COMMS_VARIABLE , count_packet , sizeof(count_packet) );
-	Flash_Read_Data( COMMS_VARIABLE + 0x1 , count_window , sizeof(count_window) );
+	Flash_Read_Data( COMMS_VARIABLE , count_packet , sizeof(count_packet) );		//Read from Flash count_packet
+	Flash_Read_Data( COMMS_VARIABLE + 0x1 , count_window , sizeof(count_window) ); 	//Read from Flash count_window
+	Flash_Read_Data( COMMS_VARIABLE + 0x2 , count_rtx , sizeof(count_rtx) ); 		//Read from Flash count_rtx
 	ack = 0xFFFFFFFFFFFFFFFF;
 	nack = false;
+	//state = RX;
 
 };
 
@@ -70,13 +159,16 @@ void configuration(void){
 
 void tx_function(void){
 	//configuration();
-	packaging(); //Start the TX by packaging all the data that will be transmitted
-	//SX126xSetPayload(); //Aquesta fa el writebuffer, sha de posar direccions com a la pag 48 del datasheet
-
-    Radio.Send( Buffer, BUFFER_SIZE );
-
+	if (!full_window)
+	{
+		packaging(); //Start the TX by packaging all the data that will be transmitted
+		//SX126xSetPayload(); //Aquesta fa el writebuffer, sha de posar direccions com a la pag 48 del datasheet
+		Radio.Send( Buffer, BUFFER_SIZE );
+	}
 };
 
+
+/* I THINK THAT THIS FUNCTION IS NOT NEEDED*/
 void rx_function(void){
 	Radio.Rx( RX_TIMEOUT_VALUE );
 
@@ -85,16 +177,259 @@ void rx_function(void){
 void packaging(void){
 	//NACK packets at the beginnig of the next window
 
-	//i) If nack = true	=>
-
-	//ii)
-
-	Flash_Read_Data( PHOTO_ADDR , Buffer , sizeof(Buffer) );	//Direction in HEX
-
+	if (nack)
+	{
+		while(i<sizeof(ack) && nack_number != i-1)
+		{
+			//function to obtain the packets to retx
+			if(!((ack >> i) & 1)) //When position of the ack & 1 != 1 --> its a 0 --> NACK
+			{
+				nack_number = i;	//Current packet to rtx
+				//Packet from last window => count_window - 1
+				Flash_Read_Data( PHOTO_ADDR + (count_window[0]-1)*WINDOW_SIZE*BUFFER_SIZE + (nack_number)*BUFFER_SIZE , Buffer , sizeof(Buffer) );	//Direction in HEX
+				count_rtx[0]++;
+			}
+			i++;
+		}
+		if (i==sizeof(ack)){
+			i=0;
+		}
+		else if (nack_number == i-1){
+			i++;
+		}
+	}
+	else //no NACKS
+	{
+		Flash_Read_Data( PHOTO_ADDR + count_window[0]*WINDOW_SIZE*BUFFER_SIZE + (count_packet[0]-count_rtx[0])*BUFFER_SIZE , Buffer , sizeof(Buffer) );	//Direction in HEX
+		if (count_packet[0] < WINDOW_SIZE - 1)
+		{
+			count_packet[0]++;
+		}
+		else
+		{
+			count_packet[0] = 0;
+			count_window[0]++;
+			full_window = true;
+		}
+	}
 };
 
+
+/*This function is called when a new photo is stored in the last photo position*/
 void resetCommsParams(void){
-
-
+	count_packet[0] = 0;
+	count_window[0] = 0;
+	count_rtx[0] 	= 0;
 }
+
+
+void stateMachine(void){
+    uint16_t PacketCnt = 0;
+
+    RadioEvents.TxDone = OnTxDone;
+    RadioEvents.RxDone = OnRxDone;
+    RadioEvents.TxTimeout = OnTxTimeout;
+    RadioEvents.RxTimeout = OnRxTimeout;
+    RadioEvents.RxError = OnRxError;
+    RadioEvents.CadDone = OnCadDone;
+
+    //Timer used to restart the CAD
+    TimerInit( &CADTimeoutTimer, CADTimeoutTimeoutIrq );
+    TimerSetValue( &CADTimeoutTimer, CAD_TIMER_TIMEOUT );
+
+    //App timmer used to check the RX's end
+    TimerInit( &RxAppTimeoutTimer, RxTimeoutTimerIrq );
+    TimerSetValue( &RxAppTimeoutTimer, RX_TIMER_TIMEOUT );
+
+    configuration();
+
+    SX126xConfigureCad( CAD_SYMBOL_NUM, CAD_DET_PEAK,CAD_DET_MIN, CAD_TIMEOUT_MS);      // Configure the CAD
+    Radio.StartCad( );                                                                  // do the config and lunch first CAD
+
+    switch( State )
+    {
+        case RX_TIMEOUT:
+        {
+			#if(FULL_DBG)
+            	printf( "RX Timeout\r\n");
+			#endif
+            //RxTimeoutCnt++;
+            State = START_CAD;
+            break;
+        }
+        case RX_ERROR:
+        {
+			#if(FULL_DBG)
+            	printf( "RX Error\r\n");
+			#endif
+            //RxErrorCnt++;
+            PacketReceived = false;
+            State = START_CAD;
+        break;
+        }
+        case RX:
+        {
+            if( PacketReceived == true )
+            {
+                PacketReceived = false;     // Reset flag
+                RxCorrectCnt++;         // Update RX counter
+				#if(FULL_DBG)
+					printf( "Rx Packet n %d\r\n", PacketCnt );
+				#endif
+                State = START_CAD;
+            }
+            else
+            {
+                if (CadRx == CAD_SUCCESS)
+                {
+                	//PUT HERE THE CODE TO WITHDRAW THE INFO FROM THE BUFFER
+
+                    //channelActivityDetectedCnt++;   // Update counter
+					#if(FULL_DBG)
+                    	printf( "Rxing\r\n");
+					#endif
+                    RxTimeoutTimerIrqFlag = false;
+                    TimerReset(&RxAppTimeoutTimer);	// Start the Rx's's Timer
+                    Radio.Rx( RX_TIMEOUT_VALUE );
+                }
+                else
+                {
+                    TimerStart(&CADTimeoutTimer);   // Start the CAD's Timer
+                }
+                State = LOWPOWER;
+            }
+            break;
+        }
+        case TX:
+        {
+            printf("Send Packet n %d \r\n",PacketCnt);
+            if( PacketCnt == 0xFFFF)
+            {
+                PacketCnt = 0;
+            }
+            else
+            {
+                PacketCnt ++;
+            }
+            //Send Frame
+            DelayMs( 1 );
+            tx_function();
+            State = LOWPOWER;
+            break;
+        }
+        case TX_TIMEOUT:
+        {
+            State = LOWPOWER;
+            break;
+        }
+        case START_CAD:
+        {
+            //i++;    // Update NbTryCnt
+            TimerStop(&RxAppTimeoutTimer);  // Stop the Rx's Timer
+            // Trace for debug
+            if(CadRx == CAD_FAIL)
+            {
+				#if(FULL_DBG)
+            		printf("No CAD detected\r\n");
+				#endif
+            }
+            CadRx = CAD_FAIL;           // Reset CAD flag
+            DelayMs(randr(10,500));     //Add a random delay for the PER test => CHECK THIS WARNING
+			#if(FULL_DBG)
+            	printf("CAD %d\r\n",i);
+			#endif
+            Radio.StartCad( );          //StartCad Again
+            State = LOWPOWER;
+        break;
+        }
+        case LOWPOWER:
+        default:
+            // Set low power
+            break;
+    }
+}
+
+
+
+
+/*
+ * FUNCTIONS OBTAINED FROM EXAMPLE MAIN.C
+ */
+
+
+void OnTxDone( void )
+{
+    Radio.Standby( );
+    State = TX;
+}
+
+void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
+{
+    Radio.Standby( );
+    BufferSize = size;
+    memcpy( Buffer, payload, BufferSize );
+    RssiValue = rssi;
+    SnrValue = snr;
+    PacketReceived = true;
+    RssiMoy = (((RssiMoy * RxCorrectCnt) + RssiValue) / (RxCorrectCnt + 1));
+    SnrMoy = (((SnrMoy * RxCorrectCnt) + SnrValue) / (RxCorrectCnt + 1));
+    State = RX;
+}
+
+void OnTxTimeout( void )
+{
+    Radio.Standby( );
+    State = TX_TIMEOUT;
+}
+
+void OnRxTimeout( void )
+{
+    Radio.Standby( );
+    if( RxTimeoutTimerIrqFlag )
+    {
+        State = RX_TIMEOUT;
+    }
+    else
+    {
+		#if(FULL_DBG)
+        	printf(".");
+		#endif
+        Radio.Rx( RX_TIMEOUT_VALUE );   //  Restart Rx
+        //SymbTimeoutCnt++;               //  if we pass here because of Symbol Timeout
+        State = LOWPOWER;
+    }
+}
+
+void OnRxError( void )
+{
+    Radio.Standby( );
+    State = RX_ERROR;
+}
+
+void OnCadDone( bool channelActivityDetected)
+{
+    Radio.Standby( );
+
+    if( channelActivityDetected == true )
+    {
+        CadRx = CAD_SUCCESS;
+    }
+    else
+    {
+        CadRx = CAD_FAIL;
+    }
+    State = RX;
+}
+
+static void CADTimeoutTimeoutIrq( void )
+{
+    Radio.Standby( );
+    State = START_CAD;
+}
+
+static void RxTimeoutTimerIrq( void )
+{
+    RxTimeoutTimerIrqFlag = true;
+}
+
 
