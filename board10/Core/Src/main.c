@@ -138,35 +138,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		system_state(&hi2c1);
-		switch (currentState)
-		{
-
-		case IDLE:
-			/* if a telecomand to use the payload/comms is received, go to PAYLOADS/COMMS state */
-			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
-			check_position();
-			if(payload_state && checkmemory())	currentState = PAYLOAD; /*payload becomes true if a telecommand to acquire data is received*/
-			else if(comms_state)	currentState = COMMS;	/*comms becomes true when we have acquired the data and we need to send it*/
-			sensorReadings(&hi2c1); /*Updates the values of temperatures, voltages and currents*/
-			/*ADCS tasks needed??*/
-			//Add Rx mode here
-			break;
-
-		/*Is needed to listen periodically with the receiver or timer from IDLE state? -> COMMS part*/
-		case COMMS:	// This might refer ONLY refer to TX!!!
-			/* check if the picture or spectrogram has to be sent and send it if needed */
-			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
-			else if(comms_state); //telecommand(); 	        /* function that receives orders from "COMMS" */
-			//else if(comms_timer_state) sendtelemetry(); /* loop that sends the telemetry data to "COMMS" */
-			//comms_state = false;
-			comms_timer_state = false;
-			//comms_timer_state = false;	//Descomentar aixo
-			currentState = IDLE;
-			break;
-			//HAL_FLASH_Program(TypeProgram, Adress, Data); //todo: comprovar HAL
-
-		case PAYLOAD:
 
 		// ^ Request frame
 		//	framePointer = 0;
@@ -193,32 +164,6 @@ int main(void)
 			currentState = IDLE;
 			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
 			break;
-
-		case CONTINGENCY:
-			/*Turn STM32 to Stop Mode or Standby Mode
-			 *Loop to check at what batterylevel are we
-			 *Out of CONTINGENCY State when batterylevel is NOMINAL
-			 *todo CHECK IF WE CAN EXECUTE SOME TASKS OR NOT IN STANDBY MODE*/
-			 //while(checkbatteries() /= NOMINAL){
-			 //}
-			 /*Return to Run Mode*/
-			 currentState = IDLE;
-			 //Una opció és fer reset total del satelit quan surti de contingency
-			break;
-		/*If we reach this state something has gone wrong*/
-		default:
-			/*REBOOT THE SYSTEM*/
-			break;
-		}
-
-
-		/*Start a TIMER*/
-
-//	    return 0;
-
-		//todo variable que conti ticks rellotge per fer reset
-
-
 
 	/* USER CODE END WHILE */
 
