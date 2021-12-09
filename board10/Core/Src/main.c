@@ -89,6 +89,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  pthread_t thread_comms;
+
   uint8_t payload_state[] = {TRUE}; //bool which indicates when do we need to go to PAYLOAD state
   uint8_t comms_state[] = {FALSE}; //bool which indicates if we are in region of contact with GS, then go to COMMS state
   uint8_t payload_lect[] = {0x05}, comms_lect[] = {0xA3};
@@ -155,6 +157,13 @@ int main(void)
 
 		/*Is needed to listen periodically with the receiver or timer from IDLE state? -> COMMS part*/
 		case COMMS:	// This might refer ONLY refer to TX!!!
+			configuration();
+			pthread_create(&thread_comms, NULL, stateMachine(), NULL);
+
+
+
+
+
 			/* check if the picture or spectrogram has to be sent and send it if needed */
 			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
 			else if(comms_state); //telecommand(); 	        /* function that receives orders from "COMMS" */

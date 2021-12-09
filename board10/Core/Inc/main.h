@@ -35,6 +35,7 @@ extern "C" {
 #include "configuration.h"
 #include "definitions.h"
 #include "sensorReadings.h"
+#include <pthread.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */

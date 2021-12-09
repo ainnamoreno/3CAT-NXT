@@ -102,6 +102,7 @@ void retrieveImage(UART_HandleTypeDef *huart)
 	for(int i = 0; i < frameLength; i++){
 	  dataVect[i] = 0;
 	}
+
   //BORRAR
 
 	while (frameLength > 0)
