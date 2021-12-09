@@ -151,6 +151,7 @@ void configuration(void){
 	Flash_Read_Data( COMMS_VARIABLE + 0x2 , count_rtx , sizeof(count_rtx) ); 		//Read from Flash count_rtx
 	ack = 0xFFFFFFFFFFFFFFFF;
 	nack = false;
+	//state = RX;
 
 };
 
@@ -178,16 +179,23 @@ void packaging(void){
 
 	if (nack)
 	{
-		for(i=0; i<sizeof(ack); i++)
+		while(i<sizeof(ack) && nack_number != i-1)
 		{
 			//function to obtain the packets to retx
 			if(!((ack >> i) & 1)) //When position of the ack & 1 != 1 --> its a 0 --> NACK
 			{
-				nack_number = i/*ACK*/;	//Delete the 1 and put a function in ack to obtain the number
+				nack_number = i;	//Current packet to rtx
 				//Packet from last window => count_window - 1
 				Flash_Read_Data( PHOTO_ADDR + (count_window[0]-1)*WINDOW_SIZE*BUFFER_SIZE + (nack_number)*BUFFER_SIZE , Buffer , sizeof(Buffer) );	//Direction in HEX
 				count_rtx[0]++;
 			}
+			i++;
+		}
+		if (i==sizeof(ack)){
+			i=0;
+		}
+		else if (nack_number == i-1){
+			i++;
 		}
 	}
 	else //no NACKS
