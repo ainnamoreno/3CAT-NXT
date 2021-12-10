@@ -11,6 +11,7 @@
 
 static const uint8_t GYRO_ADDR = 0x68 << 1; //gyroscope address, 0x68 or 0x69 depending on the SA0 pin
 static const uint8_t MAG_ADDR = 0x30 << 1; //magnetometer address
+static const uint8_t BATTSENSOR_ADDR = 0x34 << 1; //battery sensor address
 
 
 int checkbatteries(){
