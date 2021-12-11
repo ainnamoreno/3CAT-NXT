@@ -151,7 +151,7 @@ void configuration(void){
 	Flash_Read_Data( COMMS_VARIABLE + 0x2 , count_rtx , sizeof(count_rtx) ); 		//Read from Flash count_rtx
 	ack = 0xFFFFFFFFFFFFFFFF;
 	nack = false;
-	//state = RX;
+	//State = RX;
 
 };
 
@@ -246,6 +246,8 @@ void stateMachine(void){
     SX126xConfigureCad( CAD_SYMBOL_NUM, CAD_DET_PEAK,CAD_DET_MIN, CAD_TIMEOUT_MS);      // Configure the CAD
     Radio.StartCad( );                                                                  // do the config and lunch first CAD
 
+    State = RX;
+
     switch( State )
     {
         case RX_TIMEOUT:
@@ -334,7 +336,8 @@ void stateMachine(void){
 				#endif
             }
             CadRx = CAD_FAIL;           // Reset CAD flag
-            DelayMs(randr(10,500));     //Add a random delay for the PER test => CHECK THIS WARNING
+            //DelayMs(randr(10,500));     //Add a random delay for the PER test => CHECK THIS WARNING
+            DelayMs(100);     //Add a random delay for the PER test => CHECK THIS WARNING
 			#if(FULL_DBG)
             	printf("CAD %d\r\n",i);
 			#endif

@@ -20,9 +20,11 @@
  *
  * \author    Gregory Cristian ( Semtech )
  */
-
-
+#include <math.h>
+#include <string.h>
+#include "board.h"
 #include "sx126x.h"
+#include "sx126x-board.h"
 
 /*!
  * \brief Radio registers definition
@@ -713,11 +715,3 @@ void SX126xClearIrqStatus( uint16_t irq )
     buf[1] = ( uint8_t )( ( uint16_t )irq & 0x00FF );
     SX126xWriteCommand( RADIO_CLR_IRQSTATUS, buf, 2 );
 }
-
-void SX126xConfigureCad( RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin , uint32_t cadTimeout)
-{
-    SX126xSetDioIrqParams( 	IRQ_CAD_DONE | IRQ_CAD_ACTIVITY_DETECTED, IRQ_CAD_DONE | IRQ_CAD_ACTIVITY_DETECTED,
-                            IRQ_RADIO_NONE, IRQ_RADIO_NONE );
-    SX126xSetCadParams( cadSymbolNum, cadDetPeak, cadDetMin, LORA_CAD_ONLY, ((cadTimeout * 1000) / 15.625 ));
-}
-

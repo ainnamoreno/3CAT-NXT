@@ -1,4 +1,5 @@
 /*
+  ______                              _
  / _____)             _              | |
 ( (____  _____ ____ _| |_ _____  ____| |__
  \____ \| ___ |    (_   _) ___ |/ ___)  _ \
@@ -6,20 +7,25 @@
 (______/|_____)_|_|_| \__)_____)\____)_| |_|
     (C)2013 Semtech
 
-Description: Delay functions implementation
+Description: Bleeper board SPI driver implementation
 
 License: Revised BSD License, see LICENSE.TXT file include in the project
 
 Maintainer: Miguel Luis and Gregory Cristian
 */
-#include "board.h"
+#ifndef __SPI_MCU_H__
+#define __SPI_MCU_H__
 
-void Delay( float s )
+/*!
+ * SPI driver structure definition
+ */
+struct Spi_s
 {
-    DelayMs( s * 1000.0f );
-}
+    SPI_HandleTypeDef Spi;
+    Gpio_t Mosi;
+    Gpio_t Miso;
+    Gpio_t Sclk;
+    Gpio_t Nss;
+};
 
-void DelayMs( uint32_t ms )
-{
-    HAL_Delay( ms );
-}
+#endif  // __SPI_MCU_H__

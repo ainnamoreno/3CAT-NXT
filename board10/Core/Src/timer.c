@@ -12,10 +12,8 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
 
 Maintainer: Miguel Luis and Gregory Cristian
 */
-//#include "board.h"
-//#include "rtc-board.h"
-
-#include "timer.h"
+#include "board.h"
+#include "rtc-board.h"
 
 
 /*!

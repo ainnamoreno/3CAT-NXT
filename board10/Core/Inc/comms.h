@@ -26,18 +26,17 @@
 #ifndef INC_COMMS_H_
 #define INC_COMMS_H_
 
-
-#include <radio.h>
-#include <sx126x.h>
-#include <flash.h>
-
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <string.h>
 #include <inttypes.h>
+#include "definitions.h"
+
+#include <string.h>
 #include <math.h>
+#include "board.h"
+#include "radio.h"
 
 /*This are COMMS definitions*/
 #define RF_FREQUENCY 						868000000  	// 868 MHz

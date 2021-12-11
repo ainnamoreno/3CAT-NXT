@@ -23,12 +23,6 @@
 #ifndef __RADIO_H__
 #define __RADIO_H__
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include "stm32f4xx_hal.h"
-
-
 /*!
  * Radio driver supported modems
  */

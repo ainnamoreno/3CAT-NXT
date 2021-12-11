@@ -21,15 +21,11 @@
  * \author    Gregory Cristian ( Semtech )
  */
 #include <math.h>
-#include <radio.h>
 #include <string.h>
-//#include "board.h"
-#include <sx126x.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <timer.h>
-//#include "sx126x-board.h"
+#include "board.h"
+#include "radio.h"
+#include "sx126x.h"
+#include "sx126x-board.h"
 
 /*!
  * \brief Initializes the radio
@@ -503,7 +499,7 @@ void RadioInit( RadioEvents_t *events )
     SX126xSetStandby( STDBY_RC );
     SX126xSetRegulatorMode( USE_DCDC );
 
-    SX126xSetBufferBaseAddress( 0x00, 0x88 );
+    SX126xSetBufferBaseAddress( 0x00, 0x00 );
     SX126xSetTxParams( 0, RADIO_RAMP_200_US );
     SX126xSetDioIrqParams( IRQ_RADIO_ALL, IRQ_RADIO_ALL, IRQ_RADIO_NONE, IRQ_RADIO_NONE );
 

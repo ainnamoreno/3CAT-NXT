@@ -15,6 +15,12 @@
 //#include "stm32f4xx_hal_uart.h"
 #include "stm32f4xx_hal.h"
 
+
+/*Memory comms*/
+#define COMMS_VARIABLE	4444
+#define PHOTO_ADDR		8888
+
+
 /*Temperature range operation of STM32L162VE*/
 #define TEMP_MIN -40
 #define TEMP_MAX 105
@@ -32,13 +38,10 @@
 #define LOW					03
 #define CRITICAL			04
 
-//#define NACKDATA  			08	/*If it is received if the GS do not receive all the segments of the data.
- 	 	 	 	 	 	 	 	 //*The PQ will send since the last segment received correctly.*/
 /*ADCS*/
 #define SET_CONSTANT_KP		10
 #define TLE  				11 /*Packet from GS with the new TLE, update it inside memory
  	 	 	 	 	 	 	  the SPG4 uses it to propagate the orbit*/
-
 
 /*COMMS*/
 #define SENDDATA  			20	/*If the acquired photo or spectogram is needed to be send to GS*/
@@ -60,7 +63,6 @@
 #define F_MAX				42
 #define DELTA_F				43
 #define INTEGRATION_TIME	44
-
 
 #define SEND_CONFIG			50	//Send all configuration
 

@@ -23,26 +23,6 @@
 #ifndef __SX126x_H__
 #define __SX126x_H__
 
-#include <inttypes.h>
-#include "timer.h"
-#include "delay.h"
-
-//#include "uart.h"
-#include "stm32f4xx_hal.h"
-
-#include <math.h>
-//#include "board.h"
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
-
-#include <stdbool.h>
-
-#include <gpio.h>
-#include <spi.h>
-
 
 #define SX1261                                      1
 #define SX1262                                      2
@@ -1128,7 +1108,5 @@ void SX126xClearDeviceErrors( void );
  * \param [in]  irq           IRQ(s) to be cleared
  */
 void SX126xClearIrqStatus( uint16_t irq );
-
-void SX126xConfigureCad( RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin , uint32_t cadTimeout);
 
 #endif // __SX126x_H__
