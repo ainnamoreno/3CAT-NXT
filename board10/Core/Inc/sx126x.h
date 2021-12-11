@@ -24,8 +24,63 @@
 #define __SX126x_H__
 
 
+#include <math.h>
+#include <string.h>
+
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_uart.h"
+#include "utilities.h"
+#include "timer.h"
+#include "delay.h"
+#include "gpio.h"
+#include "spi.h"
+//#include "uart.h"
+#include "radio.h"
+
 #define SX1261                                      1
 #define SX1262                                      2
+
+/*--------------------------------------------------*/
+#define RADIO_RESET                                 11 //a la placa real es: PC_9	//ES NRESET
+
+#define RADIO_MOSI                                  PB_15
+#define RADIO_MISO                                  PB_14
+#define RADIO_SCLK                                  PB_13
+#define RADIO_NSS                                   12 //PB_12
+
+#define RADIO_BUSY                                  13 //PA_8
+#define RADIO_DIO_1                                 14 //PA_10
+
+//#define ANT_SWITCH_POWER                            PA_9	//REVISAR
+
+//#define OSC_LSE_IN                                  PC_14
+//#define OSC_LSE_OUT                                 PC_15
+
+//#define OSC_HSE_IN                                  PH_0
+//#define OSC_HSE_OUT                                 PH_1
+
+//#define SWCLK                                       PA_14
+//#define SWDAT                                       PA_13
+
+//#define I2C_SCL                                     PB_6
+//#define I2C_SDA                                     PB_7
+
+//#define UART_TX                                     PA_2
+//#define UART_RX                                     PA_3
+
+//#define LED_1                                       PC_1
+//#define LED_2                                       PC_0
+//#define PIN_TEST                                    PC_3
+
+//#define FR                                          PA_1
+//#define OPT                                         PB_0
+//#define DEVICE_SEL                                  PA_4 //REVISAR
+/*--------------------------------------------------*/
+
+
+
+
 
 #ifdef USE_TCXO
     /*!
@@ -1108,5 +1163,124 @@ void SX126xClearDeviceErrors( void );
  * \param [in]  irq           IRQ(s) to be cleared
  */
 void SX126xClearIrqStatus( uint16_t irq );
+
+
+/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------*/
+/*FROM SX126X-BOARD.H*/
+/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------*/
+
+/*!
+ * \brief Initializes the radio I/Os pins interface
+ */
+void SX126xIoInit( void );
+
+/*!
+ * \brief Initializes DIO IRQ handlers
+ *
+ * \param [IN] irqHandlers Array containing the IRQ callback functions
+ */
+void SX126xIoIrqInit( DioIrqHandler dioIrq );
+
+/*!
+ * \brief De-initializes the radio I/Os pins interface.
+ *
+ * \remark Useful when going in MCU low power modes
+ */
+void SX126xIoDeInit( void );
+
+/*!
+ * \brief HW Reset of the radio
+ */
+void SX126xReset( void );
+
+/*!
+ * \brief Blocking loop to wait while the Busy pin in high
+ */
+void SX126xWaitOnBusy( void );
+
+/*!
+ * \brief Wakes up the radio
+ */
+void SX126xWakeup( void );
+
+/*!
+ * \brief Send a command that write data to the radio
+ *
+ * \param [in]  opcode        Opcode of the command
+ * \param [in]  buffer        Buffer to be send to the radio
+ * \param [in]  size          Size of the buffer to send
+ */
+void SX126xWriteCommand( RadioCommands_t opcode, uint8_t *buffer, uint16_t size );
+
+/*!
+ * \brief Send a command that read data from the radio
+ *
+ * \param [in]  opcode        Opcode of the command
+ * \param [out] buffer        Buffer holding data from the radio
+ * \param [in]  size          Size of the buffer
+ */
+void SX126xReadCommand( RadioCommands_t opcode, uint8_t *buffer, uint16_t size );
+
+/*!
+ * \brief Write a single byte of data to the radio memory
+ *
+ * \param [in]  address       The address of the first byte to write in the radio
+ * \param [in]  value         The data to be written in radio's memory
+ */
+void SX126xWriteRegister( uint16_t address, uint8_t value );
+
+/*!
+ * \brief Read a single byte of data from the radio memory
+ *
+ * \param [in]  address       The address of the first byte to write in the radio
+ *
+ * \retval      value         The value of the byte at the given address in radio's memory
+ */
+uint8_t SX126xReadRegister( uint16_t address );
+
+/*!
+ * \brief Sets the radio output power.
+ *
+ * \param [IN] power Sets the RF output power
+ */
+void SX126xSetRfTxPower( int8_t power );
+
+/*!
+ * \brief Gets the board PA selection configuration
+ *
+ * \param [IN] channel Channel frequency in Hz
+ * \retval PaSelect RegPaConfig PaSelect value
+ */
+uint8_t SX126xGetPaSelect( uint32_t channel );
+
+/*!
+ * \brief Initializes the RF Switch I/Os pins interface
+ */
+//void SX126xAntSwOn( void );	//ALWAYS ON!!!
+
+/*!
+ * \brief De-initializes the RF Switch I/Os pins interface
+ *
+ * \remark Needed to decrease the power consumption in MCU low power modes
+ */
+//void SX126xAntSwOff( void );
+
+/*!
+ * \brief Checks if the given RF frequency is supported by the hardware
+ *
+ * \param [IN] frequency RF frequency to be checked
+ * \retval isSupported [true: supported, false: unsupported]
+ */
+bool SX126xCheckRfFrequency( uint32_t frequency );
+
+/*!
+ * Radio hardware and global parameters
+ */
+extern SX126x_t SX126x;
+
 
 #endif // __SX126x_H__

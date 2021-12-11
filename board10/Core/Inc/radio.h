@@ -23,6 +23,12 @@
 #ifndef __RADIO_H__
 #define __RADIO_H__
 
+#include <math.h>
+#include <string.h>
+
+#include <stdbool.h>
+#include <stdint.h>
+
 /*!
  * Radio driver supported modems
  */

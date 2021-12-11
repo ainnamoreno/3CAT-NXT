@@ -15,11 +15,22 @@ Maintainer: Miguel Luis and Gregory Cristian
 #ifndef __SPI_H__
 #define __SPI_H__
 
-#include "spi-board.h"
+//#include "spi-board.h"
+#include "stm32f4xx_hal_spi.h"
 
 /*!
  * SPI object type definition
  */
+
+struct Spi_s
+{
+    SPI_HandleTypeDef Spi;
+    Gpio_t Mosi;
+    Gpio_t Miso;
+    Gpio_t Sclk;
+    Gpio_t Nss;
+};
+
 typedef struct Spi_s Spi_t;
 
 /*!

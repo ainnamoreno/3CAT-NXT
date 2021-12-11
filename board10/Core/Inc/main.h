@@ -28,17 +28,15 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-//#include "stm32f4xx_hal.h"
-//#include <stdbool.h>
-#include "payload_camera.h"
-#include "comms.h"
-#include "configuration.h"
-#include "definitions.h"
-#include "sensorReadings.h"
+#include "stm32f4xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "payload_camera.h"
+#include "comms.h"
+#include "configuration.h"
+#include "sensorReadings.h"
+#include "definitions.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

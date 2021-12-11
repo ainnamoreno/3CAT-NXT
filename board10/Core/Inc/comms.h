@@ -35,8 +35,9 @@
 
 #include <string.h>
 #include <math.h>
-#include "board.h"
+//#include "board.h"
 #include "radio.h"
+#include "sx126x.h"
 
 /*This are COMMS definitions*/
 #define RF_FREQUENCY 						868000000  	// 868 MHz

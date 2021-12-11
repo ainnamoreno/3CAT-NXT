@@ -14,7 +14,7 @@ Maintainer: Miguel Luis and Gregory Cristian
 */
 #include <stdlib.h>
 #include <stdio.h>
-#include "board.h"
+//#include "board.h"
 #include "utilities.h"
 
 /*!

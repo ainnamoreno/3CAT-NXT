@@ -15,6 +15,11 @@ Maintainer: Miguel Luis and Gregory Cristian
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <math.h>
+
 /*!
  * \brief Timer object description
  */
@@ -33,6 +38,14 @@ typedef struct TimerEvent_s
 #ifndef TimerTime_t
 typedef uint32_t TimerTime_t;
 #endif
+
+//REVISAR AQUESTA FUNCIÓ!!! (TRETA DE LA MANGA)
+enum BoardPowerSources
+{
+    USB_POWER = 0,
+    BATTERY_POWER,
+};
+
 
 /*!
  * \brief Initializes the timer object

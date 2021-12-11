@@ -20,12 +20,11 @@
  *
  * \author    Gregory Cristian ( Semtech )
  */
-#include <math.h>
-#include <string.h>
-#include "board.h"
+
+//#include "board.h"
 #include "radio.h"
 #include "sx126x.h"
-#include "sx126x-board.h"
+//#include "sx126x-board.h"
 
 /*!
  * \brief Initializes the radio

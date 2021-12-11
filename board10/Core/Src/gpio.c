@@ -16,13 +16,13 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
 
 Maintainer: Miguel Luis and Gregory Cristian
 */
-#include "board.h"
+//#include "board.h"
 
-#include "gpio-board.h"
+#include "gpio.h"
 
-#if defined( BOARD_IOE_EXT )
-#include "gpio-ioe.h"
-#endif
+//#if defined( BOARD_IOE_EXT )
+//#include "gpio-ioe.h"
+//#endif
 
 void GpioInit( Gpio_t *obj, PinNames pin, PinModes mode,  PinConfigs config, PinTypes type, uint32_t value )
 {
