@@ -24,7 +24,7 @@ int checkbatteries(){
 
 }
 
-void detumble() {
+void detumble(I2C_HandleTypeDef *hi2c) {
 
 }
 
@@ -72,7 +72,7 @@ bool check_position() {
 void init(bool detumble_state, bool deployment_state, bool deploymentRF_state, I2C_HandleTypeDef *hi2c){
 	if(!system_state(&hi2c)) currentState = CONTINGENCY;
 	else {
-		if(!detumble_state) detumble();
+		if(!detumble_state) detumble(&hi2c);
 		if(!deployment_state)	deployment(deployment_state, &hi2c);
 		//Just in the PocketQube with the RF antenna
 		if(!deploymentRF_state) deploymentRF();

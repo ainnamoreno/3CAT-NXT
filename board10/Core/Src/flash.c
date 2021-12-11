@@ -226,7 +226,7 @@ float Bytes2float(uint8_t * ftoa_bytes_temp)
 //	   return 0;
 //}
 
-uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofwords)
+uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofbytes)
 {
 
 	static FLASH_EraseInitTypeDef EraseInitStruct;
@@ -244,7 +244,7 @@ uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t 
 	  /* Get the number of sector to erase from 1st sector */
 
 	  uint32_t StartSector = GetSector(StartSectorAddress);
-	  uint32_t EndSectorAddress = StartSectorAddress + numberofwords*4;
+	  uint32_t EndSectorAddress = StartSectorAddress + numberofbytes;
 	  uint32_t EndSector = GetSector(EndSectorAddress);
 
 	  /* Fill EraseInit structure*/
@@ -266,7 +266,7 @@ uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t 
 	  /* Program the user Flash area word by word
 	    (area defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR) ***********/
 
-	   while (sofar<numberofwords)
+	   while (sofar<numberofbytes)
 	   {
 	     if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, StartSectorAddress, Data[sofar]) == HAL_OK)
 	     {
@@ -287,8 +287,14 @@ uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t 
 	   return 0;
 }
 
+void Write_Flash(uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofbytes) {
+	Flash_Write_Data(StartSectorAddress, Data, numberofbytes);
+	Flash_Write_Data(StartSectorAddress + 0x4000, Data, numberofbytes);
+	Flash_Write_Data(StartSectorAddress + 0x8000, Data, numberofbytes);
+}
 
-void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numberofwords)
+
+void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numberofbytes)
 {
 	while (1)
 	{
@@ -301,37 +307,33 @@ void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numb
 //		}
 		StartSectorAddress += 1;
 		RxBuf++;
-		numberofwords--;
-		if (numberofwords == 0x00) break;
+		numberofbytes--;
+		if (numberofbytes == 0x00) break;
 	}
 }
 
-void Convert_To_Str (uint32_t *Data, char *Buf)
-{
-	int numberofbytes = ((strlen((char *)Data)/4) + ((strlen((char *)Data) % 4) != 0)) *4;
+void Check_Redundancy(uint32_t Address, uint8_t *RxBuf1, uint8_t *RxBuf2, uint8_t *RxBuf3, uint8_t *RxDef){
+	Flash_Read_Data(Address, RxBuf1, sizeof(RxBuf1));
+	Flash_Read_Data(Address + 0x4000, RxBuf2, sizeof(RxBuf2));
+	Flash_Read_Data(Address + 0x8000, RxBuf3, sizeof(RxBuf3));
 
-	for (int i=0; i<numberofbytes; i++)
-	{
-		Buf[i] = Data[i/4]>>(8*(i%4));
+	if(*RxBuf1 == *RxBuf2 || *RxBuf1 == *RxBuf3) {
+		*RxDef = *RxBuf1;
+	}
+	else if(*RxBuf2 == *RxBuf3) {
+		*RxDef = *RxBuf2;
+	}
+	else {
+		*RxDef = *RxBuf1; /*PREGUNTAR QUÈ FER QUAN NO COINCIDEIX CAP LECTURA (POC PROBABLE)*/
 	}
 }
 
-
-void Flash_Write_NUM (uint32_t StartSectorAddress, float Num)
-{
-
-	float2Bytes(bytes_temp, Num);
-
-	Flash_Write_Data (StartSectorAddress, (uint32_t *)bytes_temp, 4);
-}
-
-
-float Flash_Read_NUM (uint32_t StartSectorAddress)
-{
-	uint8_t buffer[4];
-	float value;
-
-	Flash_Read_Data(StartSectorAddress, (uint32_t *)buffer, 4);
-	value = Bytes2float(buffer);
-	return value;
+void Read_Flash(uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numberofbytes) {
+	if (StartSectorAddress >= 0x08000000 && StartSectorAddress <= 0x0800BFFF) {
+		uint8_t lect1[numberofbytes], lect2[numberofbytes], lect3[numberofbytes];
+		Check_Redundancy(StartSectorAddress, lect1, lect2, lect3, RxBuf);
+	}
+	else {
+		Flash_Read_Data(StartSectorAddress, RxBuf, numberofbytes);
+	}
 }

@@ -26,7 +26,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -91,9 +90,9 @@ int main(void)
   /* USER CODE BEGIN Init */
   pthread_t thread_comms;
 
-  uint8_t payload_state[] = {TRUE}; //bool which indicates when do we need to go to PAYLOAD state
+  uint8_t payload_state[] = {0x05}; //bool which indicates when do we need to go to PAYLOAD state
   uint8_t comms_state[] = {FALSE}; //bool which indicates if we are in region of contact with GS, then go to COMMS state
-  uint8_t payload_lect[] = {0x05}, comms_lect[] = {0xA3};
+  uint8_t payload_lect[] = {0x23};
   uint8_t requestData[] = {0x01, 0x00}; //todo borrar
   bool deployment_state;
   bool deploymentRF_state; //indicates if the deployment of the Payload antenna has been deployed
@@ -121,18 +120,15 @@ int main(void)
   MX_USB_OTG_FS_HCD_Init();
   /* USER CODE BEGIN 2 */
 
-  	//Flash_Write_Data(0x0800C000, payload_state);
+  	Write_Flash(PAYLOAD_STATE_ADDR, payload_state, sizeof(payload_state));
 
-  	Flash_Read_Data(0x0800C000, payload_lect, 1);
+  	Read_Flash(PAYLOAD_STATE_ADDR, payload_lect, 1);
   	comms_state[0] = 0x66666666;
-  	//Flash_Write_Data(0x0800C010, comms_state);
-  	Flash_Read_Data(0x0800C010, comms_lect, 1);
   //  temp.fields.temp1 = 0x1A;
   //  temp.fields.temp3 = 0x8F;
   //  Flash_Write_Data(0x0800C000, temp.raw, len(temp.raw));
   //  Temperatures temp_lect;
   //  Flash_Read_Data(0x0800C000, temp_lect.raw, 2);
-      //HAL_NVIC_SystemReset();
 
   /* USER CODE END 2 */
 
@@ -157,8 +153,8 @@ int main(void)
 
 		/*Is needed to listen periodically with the receiver or timer from IDLE state? -> COMMS part*/
 		case COMMS:	// This might refer ONLY refer to TX!!!
-			configuration();
-			pthread_create(&thread_comms, NULL, stateMachine(), NULL);
+			//configuration();
+			//pthread_create(&thread_comms, NULL, stateMachine(), NULL);
 
 
 
@@ -229,9 +225,9 @@ int main(void)
 
 
 
-	/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-	/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }

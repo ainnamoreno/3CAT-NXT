@@ -42,7 +42,7 @@ void deploymentRF(void);
 
 /*Detumble the satellite (ADCS subsystem)
  *Once it is stabilized, write detumble_state = true in the EEPROM memory */
-void detumble(void);
+void detumble(I2C_HandleTypeDef *hi2c);
 
  /*（1)power on
   *（2)delay 2.5s

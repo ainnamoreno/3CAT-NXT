@@ -13,7 +13,7 @@
 //#include "stm32f4xx_hal_def.h"
 //#include "stm32f4xx_hal_i2c.h"
 //#include "stm32f4xx_hal_uart.h"
-#include "stm32f4xx_hal.h"
+#include <stm32f4xx_hal.h>
 
 /*Temperature range operation of STM32L162VE*/
 #define TEMP_MIN -40
