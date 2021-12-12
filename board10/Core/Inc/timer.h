@@ -16,13 +16,18 @@ Maintainer: Miguel Luis and Gregory Cristian
 #define __TIMER_H__
 
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <inttypes.h>
 
-#include <string.h>
 #include <math.h>
+#include <stm32f4xx_hal.h>
+
+
+//REVISAR AQUESTA FUNCIÓ!!! (TRETA DE LA MANGA)
+enum BoardPowerSources
+{
+    USB_POWER = 0,
+    BATTERY_POWER,
+};
 
 /*!
  * \brief Timer object description

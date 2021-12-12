@@ -36,8 +36,8 @@
 
 #include <string.h>  // memcpy
 #include "sx126x.h"
-#include "sx126x_hal.h"
-#include "sx126x_regs.h"
+#include <sx126x_hal.h>
+#include <sx126x_regs.h>
 
 /*
  * -----------------------------------------------------------------------------
@@ -217,10 +217,36 @@ typedef enum sx126x_commands_size_e
 static sx126x_status_t sx126x_tx_modulation_workaround( const void* context, sx126x_pkt_type_t pkt_type,
                                                         sx126x_lora_bw_t bw );
 
+
+sx126x_status_t SX126x;
+sx126x_chip_modes_t OperatingMode;
+
+
 /*
  * -----------------------------------------------------------------------------
  * --- PUBLIC FUNCTIONS DEFINITION ---------------------------------------------
  */
+
+void SX126xInit( DioIrqHandler dioIrq )
+{
+	sx126x_reset( &SX126x );
+
+    SX126xIoIrqInit( dioIrq );
+
+    sx126x_wakeup( &SX126x );
+    sx126x_set_standby( &SX126x  , SX126X_STANDBY_CFG_RC );
+
+#ifdef USE_TCXO
+    sx126x_cal_mask_t calibParam;
+
+    sx126x_set_dio3_as_tcxo_ctrl( SX126x , TCXO_CTRL_1_7V, RADIO_TCXO_SETUP_TIME << 6 ); // convert from ms to SX126x time base
+    calibParam = 0x7F;
+    sx126x_cal(  &SX126x, calibParam );
+#endif
+
+    sx126x_set_dio2_as_rf_sw_ctrl( &SX126x , true );
+    OperatingMode = SX126X_STANDBY_CFG_RC;
+}
 
 sx126x_status_t sx126x_set_sleep( const void* context, const sx126x_sleep_cfgs_t cfg )
 {

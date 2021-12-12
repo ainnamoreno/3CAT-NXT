@@ -28,6 +28,8 @@
 #include "sx126x.h"
 #include "sx126x_hal.h"
 #include "sx126x_regs.h"
+#include "timer.h"
+#include "delay.h"
 
 /*!
  * Radio driver supported modems

@@ -466,6 +466,13 @@ typedef uint16_t sx126x_errors_mask_t;
 // Operational Modes Functions
 //
 
+
+/*!
+ * Hardware IO IRQ callback function definition
+ */
+typedef void ( DioIrqHandler )( void );
+
+
 /**
  * @brief Set the chip in sleep mode
  *
