@@ -41,6 +41,8 @@
 //#include "sx126x-hal.h"
 
 static RadioEvents_t RadioEvents;	//SHOULD THIS BE IN MAIN??? IS TO HANDLE IRQ???
+sx126x_status_t SX126x;
+
 
 uint32_t air_time;
 uint8_t Buffer[BUFFER_SIZE];
@@ -358,6 +360,21 @@ void stateMachine(void){
 /*
  * FUNCTIONS OBTAINED FROM EXAMPLE MAIN.C
  */
+
+void SX126xConfigureCad( sx126x_cad_symbs_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin , uint32_t cadTimeout)
+{
+	sx126x_cad_params_t cad_params;
+	cad_params.cad_symb_nb = cadSymbolNum;
+	cad_params.cad_detect_peak = cadDetPeak;
+	cad_params.cad_detect_min = cadDetMin;
+	cad_params.cad_exit_mode = SX126X_CAD_ONLY;
+	cad_params.cad_timeout = ((cadTimeout * 1000) / 15.625 );
+
+
+	sx126x_set_dio_irq_params( 	&SX126x , SX126X_IRQ_CAD_DONE | SX126X_IRQ_CAD_DETECTED, SX126X_IRQ_CAD_DONE | SX126X_IRQ_CAD_DETECTED,
+			SX126X_IRQ_NONE, SX126X_IRQ_NONE );
+	sx126x_set_cad_params( &SX126x , &cad_params );	//REVISAR ESTE PUNTEROOOOOOOO!!!!!
+}
 
 
 void OnTxDone( void )

@@ -35,9 +35,11 @@
 
 #include <string.h>
 #include <math.h>
-//#include "board.h"
+
+#include <sx126x.h>
 #include "radio.h"
-#include "sx126x.h"
+#include "timer.h"
+
 
 /*This are COMMS definitions*/
 #define RF_FREQUENCY 						868000000  	// 868 MHz
@@ -73,7 +75,7 @@
 //CHECK THIS DEFINITIONS (I DO NOT KNOW IF THEY ARE CORRECT OR WHICH VALUE TO USE)
 #define CAD_TIMER_TIMEOUT       1000        //Define de CAD timer's timeout here
 #define RX_TIMER_TIMEOUT        4000        //Define de CAD timer's timeout here
-#define CAD_SYMBOL_NUM          LORA_CAD_02_SYMBOL
+#define CAD_SYMBOL_NUM          SX126X_CAD_02_SYMB
 #define CAD_DET_PEAK            22
 #define CAD_DET_MIN             10
 #define CAD_TIMEOUT_MS          2000
@@ -154,7 +156,7 @@ void OnCadDone( bool channelActivityDetected);
  * \param [in]  cadDetMin      Set the minimum symbol recognition for CAD
  * \param [in]  cadTimeout     Defines the timeout value to abort the CAD activity
  */
-void SX126xConfigureCad( RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin , uint32_t cadTimeout);
+void SX126xConfigureCad( sx126x_cad_symbs_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin , uint32_t cadTimeout);
 
 /*!
  * \brief CAD timeout timer callback

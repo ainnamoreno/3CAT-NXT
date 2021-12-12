@@ -14,8 +14,9 @@ Maintainer: Miguel Luis and Gregory Cristian
 */
 //#include "board.h"
 //#include "rtc-board.h"
-
 #include "timer.h"
+
+
 /*!
  * This flag is used to loop through the main several times in order to be sure
  * that all pending events have been processed.
