@@ -8,7 +8,19 @@
 #include "telecommands.h"
 
 
-
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  process_telecommand                                                     *
+ * --------------------                                                               *
+ * processes the information contained in the packet depending on the telecommand     *
+ * received																	          *
+ *                                                                                    *
+ *  header: number of telecommand			                                          *
+ *  info: information contained in the received packet								  *
+ *                                                                                    *
+ *  returns: nothing									                              *
+ *                                                                                    *
+ **************************************************************************************/
 void process_telecommand(uint8_t header, uint8_t info) {
 	switch(header) {
 	case RESET2:
@@ -48,6 +60,7 @@ void process_telecommand(uint8_t header, uint8_t info) {
 		Write_Flash(CRC_ADDR, info, 1);
 		break;
 	case TAKEPHOTO:
+
 		break;
 	case SET_PHOTO_RESOL:
 		Write_Flash(PHOTO_RESOL_ADDR, info, 1);

@@ -1,8 +1,15 @@
-/*
- * FLASH_SECTOR_F4.h
+/*!
+ * \file      flash.c
  *
- *  Created on: 15 nov. 2021
- *      Author: psimo
+ * \brief     It contains all the functions to read from / write in the flash memory
+ * 			  It also contains the different addresses of all the variables
+ *
+ *
+ * \created on: 15/11/2021
+ *
+ * \author    Pol Simon
+ *
+ * \author    David Reiss
  */
 
 #ifndef INC_FLASH_H_

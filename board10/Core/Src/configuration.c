@@ -1,19 +1,33 @@
-/*
- * configuration.cpp
+/*!
+ * \file      configuration.c
  *
- *  Created on: Apr 20, 2021
- *      Author: guifre
+ * \brief     It contains the initializing functions and all the functions that check
+ * 			  the satellite state
+ *
+ *
+ * \created on: 01/10/2021
+ *
+ * \author    Pol Simon
+ *
+ * \author    David Reiss
  */
 #include "configuration.h"
-//#include "main.h"
-//#include "main.c"
-//#include "definitions.h"
 
 static const uint8_t GYRO_ADDR = 0x68 << 1; //gyroscope address, 0x68 or 0x69 depending on the SA0 pin
 static const uint8_t MAG_ADDR = 0x30 << 1; //magnetometer address
 static const uint8_t BATTSENSOR_ADDR = 0x34 << 1; //battery sensor address
 
-
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  checkbatteries                                                 		  *
+ * --------------------                                                               *
+ * Checks the current battery level													  *
+ *                                                                                    *
+ *  No inputs													    				  *
+ *															                          *
+ *  returns: Battery level								                              *
+ *                                                                                    *
+ **************************************************************************************/
 int checkbatteries(){
 	BatteryLevels batterylevel;
 	double actual_level, percentage;
@@ -24,62 +38,117 @@ int checkbatteries(){
 
 }
 
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  detumble                                                 		  		  *
+ * --------------------                                                               *
+ * Checks the gyroscope measurements and stabilizes the satellite. 					  *
+ * It is called when the satellite is ejected from the deployer						  *
+ *                                                                                    *
+ *  hi2c: I2C to read outputs from gyroscope					    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *                                                                                    *
+ **************************************************************************************/
 void detumble(I2C_HandleTypeDef *hi2c) {
 
 }
 
-void deployment(bool deployment_state, I2C_HandleTypeDef *hi2c){
-	while(system_state(&hi2c) && !deployment_state){
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  deployment                                               		  		  *
+ * --------------------                                                               *
+ * Induces a current through a resistor in order to burn the nylon wire and deploy	  *
+ * the comms antenna. After that, the function writes delpoyment_state = true in	  *
+ * the memory																		  *
+ *																					  *
+ *  hi2c: I2C to read temperatures in system_state()			    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *                                                                                    *
+ **************************************************************************************/
+void deployment(I2C_HandleTypeDef *hi2c){
+	bool deployment = false;
+	while (system_state(&hi2c)){
 		/*Give high voltage to the resistor to burn the wire, TBD TIME AND VOLTAGE*/
 	}
-	deployment_state = true; /*Must be stored in FLASH memory in order to keep it if the system is rebooted*/
+	deployment = true;
+
+	Write_Flash(DEPLOYMENT_STATE_ADDR, &deployment, 1); /*Must be stored in FLASH memory in order to keep it if the system is rebooted*/
 }
 
-void deploymentRF(){
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  deploymentRF                                               	  		  *
+ * --------------------                                                               *
+ * Induces a current through a resistor in order to burn the nylon wire and deploy	  *
+ * the PL2 antenna. After that, the function writes delpoymentRF_state = true in the  *
+ * memory																		  	  *
+ *																					  *
+ *  hi2c: I2C to read temperatures in system_state()			    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *                                                                                    *
+ **************************************************************************************/
+void deploymentRF(I2C_HandleTypeDef *hi2c){
 
 }
 
-bool payloadconfig(UART_HandleTypeDef *huart){
-	/*POWER ON?*/
-	uint8_t reset[4] = {0x56, 0x00, 0x26, 0x00};
-	uint8_t supposedAckReset[4] = {0x76, 0x00, 0x26, 0x00};
-	uint8_t ackReset[4];
-	uint8_t setCompressibility[9] = {0x56, 0x00, 0x31, 0x05, 0x01, 0x01, 0x12, 0x04, 0xFF}; //0xFF means maximum compressed*/
-	uint8_t supposedAckSetCompressibility[5] = {0x76, 0x00, 0x31, 0x00, 0x00};
-	uint8_t ackSetCompressibility[5];
-
-//	sleep_for(std::chrono::milliseconds(DELAY_CAMERA)); /*Delay 2.5s*/
-	HAL_UART_Transmit(huart, reset, 4, 1000); 		/*Transmit reset command*/
-	HAL_UART_Receive(huart, ackReset, 4, 1000);		/*Receive ack reset*/
-	if(ackReset == supposedAckReset){
-		HAL_UART_Transmit(huart, setCompressibility, 9, 1000); 	/*Transmit compressibility of image*/
-		HAL_UART_Receive(huart, ackSetCompressibility, 4, 1000);	/*Receive ack compressibility*/
-		if(ackSetCompressibility == supposedAckSetCompressibility){
-			return true;
-		}
-	}
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  check_position                                               	  		  *
+ * --------------------                                                               *
+ * With the SPG4 file, checks if the satellite is in the contact range with GS  	  *
+ *																					  *
+ *  No input													    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *                                                                                    *
+ **************************************************************************************/
+void check_position() {
+	//Region of contact with GS => Write_Flash(COMMS_STATE_ADDRESS, TRUE, 1);
 }
 
 
-bool check_position() {
-	//check the PQ position.
-	//Region of contact with GS => comms_state = true
-}
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  init			                                               	  		  *
+ * --------------------                                                               *
+ * Simulates the "INIT" state: detumbling and deployment of the antennas. If all	  *
+ * goes as expected, the next state is IDLE											  *
+ *																					  *
+ *  hi2c: I2C to read temperatures in system_state()			    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *                                                                                    *
+ **************************************************************************************/
+void init(I2C_HandleTypeDef *hi2c){
+	bool detumble_state, deployment_state, deploymentRF_state;
+	Read_Flash(DETUMBLE_STATE_ADDR, &detumble_state, 1);
+	Read_Flash(DEPLOYMENT_STATE_ADDR, &deployment_state, 1);
+	Read_Flash(DEPLOYMENTRF_STATE_ADDR, &deploymentRF_state, 1);
 
-/* Function that simulates the "INIT" state
- * Wait for a while until we start acting on the pocketqube once it is deployed
- */
-void init(bool detumble_state, bool deployment_state, bool deploymentRF_state, I2C_HandleTypeDef *hi2c){
 	if(!system_state(&hi2c)) currentState = CONTINGENCY;
 	else {
 		if(!detumble_state) detumble(&hi2c);
-		if(!deployment_state)	deployment(deployment_state, &hi2c);
+		if(!deployment_state)	deployment(&hi2c);
 		//Just in the PocketQube with the RF antenna
-		if(!deploymentRF_state) deploymentRF();
+		if(!deploymentRF_state) deploymentRF(&hi2c);
 		currentState = IDLE;
 	}
 }
 
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  initsensors                                               	  		  *
+ * --------------------                                                               *
+ * Initializes both gyroscope and magnetometer sensors 								  *
+ *																					  *
+ *  hi2c: I2C to write in the registers of the sensors			    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *                                                                                    *
+ **************************************************************************************/
 void initsensors(I2C_HandleTypeDef *hi2c) {
 	HAL_StatusTypeDef ret;
 	//GYROSCOPE CONFIGURATION
@@ -99,12 +168,26 @@ void initsensors(I2C_HandleTypeDef *hi2c) {
 	}
 
 	//MAGNETOMETER CONFIGURATION mirar a quin registre s'ha d'escriure
-//	ret = HAL_I2C_Master_Transmit(&hi2c1, MAG_ADDR, /**/, 1, HAL_MAX_DELAY);
+//	ret = HAL_I2C_Master_Transmit(&hi2c, MAG_ADDR, /**/, 1, HAL_MAX_DELAY);
 	//wait for ACK?
 
 
 }
 
+
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  system_state                                               	  		  *
+ * --------------------                                                               *
+ * Checks the current battery level and different temperature sensors of the		  *
+ * satellite																		  *
+ *																					  *
+ *  hi2c: I2C to read from the temperature sensors				    				  *
+ *															                          *
+ *  returns: True if everything is okay					                              *
+ *  		 False if temperatures are too much high or battery low					  *
+ *                                                                                    *
+ **************************************************************************************/
 bool system_state(I2C_HandleTypeDef *hi2c){
 	if(checkbatteries() < LOW) return false;
 	else if(checkbatteries() < NOMINAL) {
@@ -118,9 +201,22 @@ bool system_state(I2C_HandleTypeDef *hi2c){
 	return true;
 }
 
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  checktemperature                                             	  		  *
+ * --------------------                                                               *
+ * Checks if all the temperatures are in their corresponding ranges. This function    *
+ * also responsible for activating or deactivating the battery heater				  *
+ *																					  *
+ *  hi2c: I2C to read from the temperature sensors				    				  *
+ *															                          *
+ *  returns: False if more than 3 solar panels are too hot or battery temperature 	  *
+ *  		 is too low																  *
+ *  		 True otherwise								                              *
+ *  		 																		  *
+ **************************************************************************************/
 bool checktemperature(I2C_HandleTypeDef *hi2c){
 	Temperatures temp;
-//	acquireTemp(&hi2c, &temp);
 	Flash_Read_Data(0x08008014, temp.raw, sizeof(temp));
 	int i, cont = 0;
 	for (i=1; i<=7; i++){  //number of sensors not defined yet
@@ -169,15 +265,25 @@ void heater(int state){
 
 }
 
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  checkmemory	                                             	  		  *
+ * --------------------                                                               *
+ * Since there will be enough space in the flash memory to store the data coming	  *
+ * from the payloads, this function must decide if the photo/spectogram already 	  *
+ * stored in memory can be overwritten												  *
+ *																					  *
+ *  hi2c: I2C to read from the temperature sensors				    				  *
+ *															                          *
+ *  returns: False if more than 3 solar panels are too hot or battery temperature 	  *
+ *  		 is too low																  *
+ *  		 True otherwise								                              *
+ *  		 																		  *
+ **************************************************************************************/
 bool checkmemory(){
 
 }
 
-void writeFlash(){
-//	HAL_FLASHEx_DATAEEPROM_Unlock();
-
-	//todo flash memory distribution
-}
 
 
 

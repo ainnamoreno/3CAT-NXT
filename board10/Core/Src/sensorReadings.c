@@ -1,13 +1,29 @@
-/*
- * sensorReadings.cpp
+/*!
+ * \file      sensorReadings.c
  *
- *  Created on: Apr 28, 2021
- *      Author: guifre
+ * \brief     Updates temperatures, voltages and currents values
+ *
+ *
+ * \created on: 01/10/2021
+ *
+ * \author    Pol Simon
+ *
+ * \author    David Reiss
  */
 
 #include "sensorReadings.h"
-//#include "main.c"
 
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  acquireTemp	                                             	  		  *
+ * --------------------                                                               *
+ * Reads temperatures from all the sensors, and stores the struct in memory			  *
+ *																					  *
+ *  hi2c: I2C to read from the temperature sensors				    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *  		 																		  *
+ **************************************************************************************/
 void acquireTemp(I2C_HandleTypeDef *hi2c){
 	Temperatures temperatures_local;
 	int i;
@@ -60,15 +76,49 @@ void acquireTemp(I2C_HandleTypeDef *hi2c){
 	Flash_Write_Data(0x08008014, temperatures_local.raw, sizeof(temperatures_local));
 }
 
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  acquireVoltage                                             	  		  *
+ * --------------------                                                               *
+ * Reads Voltages from all the sensors, and stores the struct in memory				  *
+ *																					  *
+ *  hi2c: I2C to read from the sensors							    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *  		 																		  *
+ **************************************************************************************/
 void acquireVoltage(){
 	Voltages voltages;
 
 }
 
+
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  acquireCurrents                                            	  		  *
+ * --------------------                                                               *
+ * Reads currents from all the sensors, and stores the struct in memory				  *
+ *																					  *
+ *  hi2c: I2C to read from the sensors							    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *  		 																		  *
+ **************************************************************************************/
 void acquireCurrents(){
 	Currents currents;
 }
 
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  SensorReadings                                             	  		  *
+ * --------------------                                                               *
+ * Updates all the readings (temp, voltages, currents)								  *
+ *																					  *
+ *  hi2c: I2C to read from the sensors							    				  *
+ *															                          *
+ *  returns: Nothing									                              *
+ *  		 																		  *
+ **************************************************************************************/
 void sensorReadings(I2C_HandleTypeDef *hi2c){
 	acquireTemp(&hi2c);
 	acquireVoltage();

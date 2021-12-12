@@ -1,20 +1,27 @@
-/*
- * configuration.h
+/*!
+ * \file      configuration.h
  *
- *  Created on: Apr 20, 2021
- *      Author: guifre
+ * \brief     It contains the initializing functions and all the functions that check
+ * 			  the satellite state
+ *
+ *
+ * \created on: 01/10/2021
+ *
+ * \author    Pol Simon
+ *
+ * \author    David Reiss
  */
 
 #ifndef INC_CONFIGURATION_H_
 #define INC_CONFIGURATION_H_
 
-//#include "main.h"
 #include "definitions.h"
+#include "flash.h"
 
 
 /*Only at the beginning, includes the Antenna deployment, check batteries, configure payloads*/
 /*Will be executed every time we reboot the system*/
-void init(bool detumble_state, bool deployment_state, bool deploymentRF_state, I2C_HandleTypeDef *hi2c);
+void init(I2C_HandleTypeDef *hi2c);
 
 /*Initialize all the sensors*/
 void initsensors(I2C_HandleTypeDef *hi2c);
@@ -34,34 +41,22 @@ void heater(int state);
 /*Send a signal to a resistor to burn a wire and deploy COMMS Antenna
  *Check the switch to make sure the Antenna has been deployed properly
  *And write deployment_state = true in the EEPROM memory*/
-void deployment(bool deployment_state, I2C_HandleTypeDef *hi2c);
+void deployment(I2C_HandleTypeDef *hi2c);
 
 /*Send a signal to a resistor to burn a wire and deploy PL2 Antenna
  *Once confirmed the proper deployment of the antenna,  write deploymentRF_state = true in the EEPROM memory*/
-void deploymentRF(void);
+void deploymentRF(I2C_HandleTypeDef *hi2c);
 
 /*Detumble the satellite (ADCS subsystem)
  *Once it is stabilized, write detumble_state = true in the EEPROM memory */
 void detumble(I2C_HandleTypeDef *hi2c);
 
- /*（1)power on
-  *（2)delay 2.5s
-  *（3）reset command
-  *（4）set image resolution command -> 640x480 default
-  *（5）set image compressibility command
-  * Need 115200bps band rate at UART configuration
-  * After that go to 'INIT STATE'*/
-bool payloadconfig(UART_HandleTypeDef *huart);
-
 /*We'll have a file (SPG4) which will tell us the position
- *Check if we are in the region of contact with GS
- *Also check if we are in the position of using payloads */
-bool check_position(void);
+ *Check if we are in the region of contact with GS */
+void check_position(void);
 
 /*Check battery level, temperatures,etc
  *If each parameter is between a specified values returns true*/
 bool system_state(I2C_HandleTypeDef *hi2c);
-
-//void writeFlash(TypeProgram, Adress, Data); //todo revisar
 
 #endif /* INC_CONFIGURATION_H_ */

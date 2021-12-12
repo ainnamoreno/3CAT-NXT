@@ -1,8 +1,14 @@
-/*
- * definitions.h
+/*!
+ * \file      definitions.h
  *
- *  Created on: Apr 28, 2021
- *      Author: guifre
+ * \brief     It contains many definitions and structs used in the code
+ *
+ *
+ * \created on: 01/10/2021
+ *
+ * \author    Pol Simon
+ *
+ * \author    David Reiss
  */
 
 #ifndef INC_DEFINITIONS_H_

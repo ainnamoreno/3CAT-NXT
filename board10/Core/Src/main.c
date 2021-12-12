@@ -90,18 +90,17 @@ int main(void)
   /* USER CODE BEGIN Init */
   pthread_t thread_comms;
 
-  uint8_t payload_state[] = {0x05}; //bool which indicates when do we need to go to PAYLOAD state
+  uint8_t payload_state = 0xBB; //bool which indicates when do we need to go to PAYLOAD state
   uint8_t comms_state[] = {FALSE}; //bool which indicates if we are in region of contact with GS, then go to COMMS state
-  uint8_t payload_lect[] = {0x23};
+  uint8_t payload_lect;
   uint8_t requestData[] = {0x01, 0x00}; //todo borrar
-  bool deployment_state;
-  bool deploymentRF_state; //indicates if the deployment of the Payload antenna has been deployed
+  bool deployment_state = true;
+  bool deploymentRF_state = false; //indicates if the deployment of the Payload antenna has been deployed
   bool detumble_state; //indicates if the detumbling process is completed
-  bool comms_timer_state; //indicates if it is necessary to send telemetry
   Temperatures temp;
   //todo read different boolean states
 	initsensors(&hi2c1);
-	init(detumble_state, deployment_state, deploymentRF_state, &hi2c1);
+	init(&hi2c1);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -120,9 +119,9 @@ int main(void)
   MX_USB_OTG_FS_HCD_Init();
   /* USER CODE BEGIN 2 */
 
-  	Write_Flash(PAYLOAD_STATE_ADDR, payload_state, sizeof(payload_state));
+  	Write_Flash(PAYLOAD_STATE_ADDR, &payload_state, 1);
 
-  	Read_Flash(PAYLOAD_STATE_ADDR, payload_lect, 1);
+  	Read_Flash(PAYLOAD_STATE_ADDR, &payload_lect, 1);
   	comms_state[0] = 0x66666666;
   //  temp.fields.temp1 = 0x1A;
   //  temp.fields.temp3 = 0x8F;
@@ -165,12 +164,8 @@ int main(void)
 			else if(comms_state); //telecommand(); 	        /* function that receives orders from "COMMS" */
 			//else if(comms_timer_state) sendtelemetry(); /* loop that sends the telemetry data to "COMMS" */
 			//comms_state = false;
-			comms_timer_state = false;
-			//comms_timer_state = false;	//Descomentar aixo
 			currentState = IDLE;
 			break;
-			//HAL_FLASH_Program(TypeProgram, Adress, Data); //todo: comprovar HAL
-
 		case PAYLOAD:
 
 		// ^ Request frame

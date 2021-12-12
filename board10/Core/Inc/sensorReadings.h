@@ -1,14 +1,19 @@
-/*
- * sensorReadings.h
+/*!
+ * \file      sensorReadings.h
  *
- *  Created on: Apr 28, 2021
- *      Author: guifre
+ * \brief     Updates temperatures, voltages and currents values
+ *
+ *
+ * \created on: 01/10/2021
+ *
+ * \author    Pol Simon
+ *
+ * \author    David Reiss
  */
 
 #ifndef INC_SENSORREADINGS_H_
 #define INC_SENSORREADINGS_H_
 
-//#include "main.h"
 #include "definitions.h"
 
 /*Overwrites into the Temperatures Union the temperature of the 8 sensors*/
