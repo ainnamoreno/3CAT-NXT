@@ -747,7 +747,7 @@ void RadioSetTxConfig( RadioModems_t modem, int8_t power, uint32_t fdev,
             sx126x_set_lora_pkt_params( &SX126x, &pkt_params );
             break;
     }
-    SX126xSetRfTxPower( power );
+    sx126x_set_tx_params(&SX126x, power, SX126X_RAMP_200_US );
     TxTimeout = timeout;
 }
 
@@ -804,7 +804,8 @@ void RadioSend( uint8_t *buffer, uint8_t size )
     }
     sx126x_set_lora_pkt_params( &SX126x, &pkt_params );
 
-    SX126xSendPayload( buffer, size, 0 );
+    sx126x_write_buffer( &SX126x , 0 , buffer , size );	//CHECK THE SECOND PARAMETER EQUAL TO 0
+    //SX126xSendPayload( buffer, size, 0 );
     TimerSetValue( &TxTimeoutTimer, TxTimeout );
     TimerStart( &TxTimeoutTimer );
 }
@@ -882,14 +883,14 @@ void RadioStartCad( void )
 
 void RadioTx( uint32_t timeout )
 {
-    SX126xSetTx( timeout << 6 );
+	sx126x_set_tx( &SX126x, timeout << 6 );
 }
 
 void RadioSetTxContinuousWave( uint32_t freq, int8_t power, uint16_t time )
 {
     sx126x_set_rf_freq( &SX126x,freq );
-    SX126xSetRfTxPower( power );
-    SX126xSetTxContinuousWave( );
+    sx126x_set_tx_params(&SX126x, power, SX126X_RAMP_200_US );
+    sx126x_set_tx_cw( &SX126x );
 
     TimerSetValue( &RxTimeoutTimer, time  * 1e3 );
     TimerStart( &RxTimeoutTimer );
@@ -992,13 +993,13 @@ void RadioIrqProcess( void )
 {
     if( IrqFired == true )
     {
-        BoardDisableIrq( );
+    	//CHECK THIS ERRORS WITH OBC BoardDisableIrq( );
         IrqFired = false;
-        BoardEnableIrq( );
+        //CHECK THIS ERRORS WITH OBC BoardEnableIrq( );
+        uint16_t irqRegs = 0;	//DELETE THIS LINE
+        //CHECK THIS ERRORS WITH OBC uint16_t irqRegs = sx126x_get_irq_status( &SX126x ); //CHECK THIS LINE WITH STM32F4XX_HAL_EXTI.H
 
-        uint16_t irqRegs = SX126xGetIrqStatus( );
-
-        SX126xClearIrqStatus( SX126X_IRQ_ALL );
+        sx126x_clear_irq_status( &SX126x , SX126X_IRQ_ALL );
 
         if( ( irqRegs & SX126X_IRQ_TX_DONE ) == SX126X_IRQ_TX_DONE )
         {
@@ -1014,8 +1015,9 @@ void RadioIrqProcess( void )
             uint8_t size;
 
             TimerStop( &RxTimeoutTimer );
-            SX126xGetPayload( RadioRxPayload, &size , 255 );
-            SX126xGetPacketStatus( &RadioPktStatus );
+            sx126x_read_buffer( &SX126x , 0 , RadioRxPayload, &size); //CHECK THE 2ND PARAMETER EQUAL TO 0
+            //SX126xGetPayload( RadioRxPayload, &size , 255 );
+            sx126x_get_lora_pkt_status( &SX126x , &RadioPktStatus );
             if( ( RadioEvents != NULL ) && ( RadioEvents->RxDone != NULL ) )
             {
                 RadioEvents->RxDone( RadioRxPayload, size, pkt_status.signal_rssi_pkt_in_dbm, pkt_status.snr_pkt_in_db );
@@ -1040,7 +1042,7 @@ void RadioIrqProcess( void )
 
         if( ( irqRegs & SX126X_IRQ_TIMEOUT ) == SX126X_IRQ_TIMEOUT )
         {
-            if( SX126xGetOperatingMode( ) == SX126X_CHIP_MODE_TX )
+            if( sx126x_get_status( &SX126x , &status.chip_mode) == SX126X_CHIP_MODE_TX )
             {
                 TimerStop( &TxTimeoutTimer );
                 if( ( RadioEvents != NULL ) && ( RadioEvents->TxTimeout != NULL ) )
@@ -1048,7 +1050,7 @@ void RadioIrqProcess( void )
                     RadioEvents->TxTimeout( );
                 }
             }
-            else if( SX126xGetOperatingMode( ) == SX126X_CHIP_MODE_RX )
+            else if( sx126x_get_status( &SX126x , &status.chip_mode) == SX126X_CHIP_MODE_RX )
             {
                 TimerStop( &RxTimeoutTimer );
                 if( ( RadioEvents != NULL ) && ( RadioEvents->RxTimeout != NULL ) )

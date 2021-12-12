@@ -86,11 +86,11 @@ void TimerStart( TimerEvent_t *obj )
     uint32_t elapsedTime = 0;
     uint32_t remainingTime = 0;
 
-    BoardDisableIrq( );
+    //CHECK THIS ERRORS WITH OBC BoardDisableIrq( );
 
     if( ( obj == NULL ) || ( TimerExists( obj ) == true ) )
     {
-        BoardEnableIrq( );
+    	//CHECK THIS ERRORS WITH OBC BoardEnableIrq( );
         return;
     }
 
@@ -126,7 +126,7 @@ void TimerStart( TimerEvent_t *obj )
              TimerInsertTimer( obj, remainingTime );
         }
     }
-    BoardEnableIrq( );
+    //CHECK THIS ERRORS WITH OBC BoardEnableIrq( );
 }
 
 static void TimerInsertTimer( TimerEvent_t *obj, uint32_t remainingTime )
@@ -246,7 +246,7 @@ void TimerIrqHandler( void )
 
 void TimerStop( TimerEvent_t *obj )
 {
-    BoardDisableIrq( );
+	//CHECK THIS ERRORS WITH OBC BoardDisableIrq( );
 
     uint32_t elapsedTime = 0;
     uint32_t remainingTime = 0;
@@ -257,7 +257,7 @@ void TimerStop( TimerEvent_t *obj )
     // List is empty or the Obj to stop does not exist
     if( ( TimerListHead == NULL ) || ( obj == NULL ) )
     {
-        BoardEnableIrq( );
+    	//CHECK THIS ERRORS WITH OBC BoardEnableIrq( );
         return;
     }
 
@@ -328,7 +328,7 @@ void TimerStop( TimerEvent_t *obj )
             }
         }
     }
-    BoardEnableIrq( );
+    //CHECK THIS ERRORS WITH OBC BoardEnableIrq( );
 }
 
 static bool TimerExists( TimerEvent_t *obj )
@@ -361,29 +361,29 @@ void TimerSetValue( TimerEvent_t *obj, uint32_t value )
 
 TimerTime_t TimerGetValue( void )
 {
-    return RtcGetElapsedAlarmTime( );
+	//CHECK THIS ERRORS WITH OBC return RtcGetElapsedAlarmTime( );
 }
 
 TimerTime_t TimerGetCurrentTime( void )
 {
-    return RtcGetTimerValue( );
+	//CHECK THIS ERRORS WITH OBC return RtcGetTimerValue( );
 }
 
 TimerTime_t TimerGetElapsedTime( TimerTime_t savedTime )
 {
-    return RtcComputeElapsedTime( savedTime );
+	//CHECK THIS ERRORS WITH OBC return RtcComputeElapsedTime( savedTime );
 }
 
 TimerTime_t TimerGetFutureTime( TimerTime_t eventInFuture )
 {
-    return RtcComputeFutureEventTime( eventInFuture );
+	//CHECK THIS ERRORS WITH OBC return RtcComputeFutureEventTime( eventInFuture );
 }
 
 static void TimerSetTimeout( TimerEvent_t *obj )
 {
     HasLoopedThroughMain = 0;
-    obj->Timestamp = RtcGetAdjustedTimeoutValue( obj->Timestamp );
-    RtcSetTimeout( obj->Timestamp );
+    //CHECK THIS ERRORS WITH OBC obj->Timestamp = RtcGetAdjustedTimeoutValue( obj->Timestamp );
+    //CHECK THIS ERRORS WITH OBC RtcSetTimeout( obj->Timestamp );
 }
 
 void TimerLowPowerHandler( void )

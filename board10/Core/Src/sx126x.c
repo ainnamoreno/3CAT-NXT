@@ -231,7 +231,7 @@ void SX126xInit( DioIrqHandler dioIrq )
 {
 	sx126x_reset( &SX126x );
 
-    SX126xIoIrqInit( dioIrq );
+	//CHECK THIS ERRORS WITH OBC SX126xIoIrqInit( dioIrq );
 
     sx126x_wakeup( &SX126x );
     sx126x_set_standby( &SX126x  , SX126X_STANDBY_CFG_RC );
@@ -256,7 +256,7 @@ sx126x_status_t sx126x_set_sleep( const void* context, const sx126x_sleep_cfgs_t
 
     buf[1] = ( uint8_t ) cfg;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_SLEEP, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_SLEEP, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_standby( const void* context, const sx126x_standby_cfg_t cfg )
@@ -267,7 +267,7 @@ sx126x_status_t sx126x_set_standby( const void* context, const sx126x_standby_cf
 
     buf[1] = ( uint8_t ) cfg;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_STANDBY, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_STANDBY, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_fs( const void* context )
@@ -276,7 +276,7 @@ sx126x_status_t sx126x_set_fs( const void* context )
 
     buf[0] = SX126X_SET_FS;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_FS, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_FS, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_tx( const void* context, const uint32_t timeout_in_ms )
@@ -326,7 +326,7 @@ sx126x_status_t sx126x_set_rx_with_timeout_in_rtc_step( const void* context, con
     buf[2] = ( uint8_t )( timeout_in_rtc_step >> 8 );
     buf[3] = ( uint8_t )( timeout_in_rtc_step >> 0 );
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_RX, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_RX, 0, 0 );
 }
 
 sx126x_status_t sx126x_stop_timer_on_preamble( const void* context, const bool enable )
@@ -337,7 +337,7 @@ sx126x_status_t sx126x_stop_timer_on_preamble( const void* context, const bool e
 
     buf[1] = ( enable == true ) ? 1 : 0;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_STOP_TIMER_ON_PREAMBLE, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_STOP_TIMER_ON_PREAMBLE, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_rx_duty_cycle( const void* context, const uint32_t rx_time_in_ms,
@@ -365,7 +365,7 @@ sx126x_status_t sx126x_set_rx_duty_cycle_with_timings_in_rtc_step( const void*  
     buf[5] = ( uint8_t )( sleep_time_in_rtc_step >> 8 );
     buf[6] = ( uint8_t )( sleep_time_in_rtc_step >> 0 );
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_RX_DUTY_CYCLE, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_RX_DUTY_CYCLE, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_cad( const void* context )
@@ -374,7 +374,7 @@ sx126x_status_t sx126x_set_cad( const void* context )
 
     buf[0] = SX126X_SET_CAD;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_CAD, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_CAD, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_tx_cw( const void* context )
@@ -383,7 +383,7 @@ sx126x_status_t sx126x_set_tx_cw( const void* context )
 
     buf[0] = SX126X_SET_TX_CONTINUOUS_WAVE;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_TX_CONTINUOUS_WAVE, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_TX_CONTINUOUS_WAVE, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_tx_infinite_preamble( const void* context )
@@ -392,7 +392,7 @@ sx126x_status_t sx126x_set_tx_infinite_preamble( const void* context )
 
     buf[0] = SX126X_SET_TX_INFINITE_PREAMBLE;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_TX_INFINITE_PREAMBLE, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_TX_INFINITE_PREAMBLE, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_reg_mode( const void* context, const sx126x_reg_mod_t mode )
@@ -403,7 +403,7 @@ sx126x_status_t sx126x_set_reg_mode( const void* context, const sx126x_reg_mod_t
 
     buf[1] = ( uint8_t ) mode;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_REGULATOR_MODE, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_REGULATOR_MODE, 0, 0 );
 }
 
 sx126x_status_t sx126x_cal( const void* context, const sx126x_cal_mask_t param )
@@ -414,7 +414,7 @@ sx126x_status_t sx126x_cal( const void* context, const sx126x_cal_mask_t param )
 
     buf[1] = param;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_CALIBRATE, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_CALIBRATE, 0, 0 );
 }
 
 sx126x_status_t sx126x_cal_img( const void* context, const uint32_t freq_in_hz )
@@ -449,7 +449,7 @@ sx126x_status_t sx126x_cal_img( const void* context, const uint32_t freq_in_hz )
         buf[2] = 0x6F;
     }
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_CALIBRATE_IMAGE, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_CALIBRATE_IMAGE, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_pa_cfg( const void* context, const sx126x_pa_cfg_params_t* params )
@@ -463,7 +463,7 @@ sx126x_status_t sx126x_set_pa_cfg( const void* context, const sx126x_pa_cfg_para
     buf[3] = params->device_sel;
     buf[4] = params->pa_lut;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_PA_CFG, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_PA_CFG, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_rx_tx_fallback_mode( const void* context, const sx126x_fallback_modes_t fallback_mode )
@@ -474,7 +474,7 @@ sx126x_status_t sx126x_set_rx_tx_fallback_mode( const void* context, const sx126
 
     buf[1] = ( uint8_t ) fallback_mode;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_RX_TX_FALLBACK_MODE, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_RX_TX_FALLBACK_MODE, 0, 0 );
 }
 
 //
@@ -491,7 +491,7 @@ sx126x_status_t sx126x_write_register( const void* context, const uint16_t addre
     buf[1] = ( uint8_t )( address >> 8 );
     buf[2] = ( uint8_t )( address >> 0 );
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_WRITE_REGISTER, buffer, size );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_WRITE_REGISTER, buffer, size );
 }
 
 sx126x_status_t sx126x_read_register( const void* context, const uint16_t address, uint8_t* buffer, const uint8_t size )
@@ -504,9 +504,9 @@ sx126x_status_t sx126x_read_register( const void* context, const uint16_t addres
     buf[1] = ( uint8_t )( address >> 8 );
     buf[2] = ( uint8_t )( address >> 0 );
 
-    status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_READ_REGISTER, buffer, size );
+    //CHECK THIS ERRORS WITH OBC status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_READ_REGISTER, buffer, size );
 
-    return status;
+    //CHECK THIS ERRORS WITH OBC return status;
 }
 
 sx126x_status_t sx126x_write_buffer( const void* context, const uint8_t offset, const uint8_t* buffer,
@@ -518,7 +518,7 @@ sx126x_status_t sx126x_write_buffer( const void* context, const uint8_t offset, 
 
     buf[1] = offset;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_WRITE_BUFFER, buffer, size );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_WRITE_BUFFER, buffer, size );
 }
 
 sx126x_status_t sx126x_read_buffer( const void* context, const uint8_t offset, uint8_t* buffer, const uint8_t size )
@@ -530,9 +530,9 @@ sx126x_status_t sx126x_read_buffer( const void* context, const uint8_t offset, u
 
     buf[1] = offset;
 
-    status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_READ_BUFFER, buffer, size );
+    //CHECK THIS ERRORS WITH OBC status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_READ_BUFFER, buffer, size );
 
-    return status;
+    //CHECK THIS ERRORS WITH OBC return status;
 }
 
 //
@@ -557,7 +557,7 @@ sx126x_status_t sx126x_set_dio_irq_params( const void* context, const uint16_t i
     buf[7] = ( uint8_t )( dio3_mask >> 8 );
     buf[8] = ( uint8_t )( dio3_mask >> 0 );
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_DIO_IRQ_PARAMS, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_DIO_IRQ_PARAMS, 0, 0 );
 }
 
 sx126x_status_t sx126x_get_irq_status( const void* context, sx126x_irq_mask_t* irq )
@@ -588,7 +588,7 @@ sx126x_status_t sx126x_clear_irq_status( const void* context, const sx126x_irq_m
     buf[1] = ( uint8_t )( irq_mask >> 8 );
     buf[2] = ( uint8_t )( irq_mask >> 0 );
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_CLR_IRQ_STATUS, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_CLR_IRQ_STATUS, 0, 0 );
 }
 
 sx126x_status_t sx126x_get_and_clear_irq_status( const void* context, sx126x_irq_mask_t* irq )
@@ -616,7 +616,7 @@ sx126x_status_t sx126x_set_dio2_as_rf_sw_ctrl( const void* context, const bool e
 
     buf[1] = ( enable == true ) ? 1 : 0;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_DIO2_AS_RF_SWITCH_CTRL, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_DIO2_AS_RF_SWITCH_CTRL, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_dio3_as_tcxo_ctrl( const void* context, const sx126x_tcxo_ctrl_voltages_t tcxo_voltage,
@@ -632,7 +632,7 @@ sx126x_status_t sx126x_set_dio3_as_tcxo_ctrl( const void* context, const sx126x_
     buf[3] = ( uint8_t )( timeout >> 8 );
     buf[4] = ( uint8_t )( timeout >> 0 );
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_DIO3_AS_TCXO_CTRL, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_DIO3_AS_TCXO_CTRL, 0, 0 );
 }
 
 //
@@ -657,7 +657,7 @@ sx126x_status_t sx126x_set_rf_freq_in_pll_steps( const void* context, const uint
     buf[3] = ( uint8_t )( freq >> 8 );
     buf[4] = ( uint8_t )( freq >> 0 );
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_RF_FREQUENCY, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_RF_FREQUENCY, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_pkt_type( const void* context, const sx126x_pkt_type_t pkt_type )
@@ -668,7 +668,7 @@ sx126x_status_t sx126x_set_pkt_type( const void* context, const sx126x_pkt_type_
 
     buf[1] = ( uint8_t ) pkt_type;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_PKT_TYPE, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_PKT_TYPE, 0, 0 );
 }
 
 sx126x_status_t sx126x_get_pkt_type( const void* context, sx126x_pkt_type_t* pkt_type )
@@ -694,7 +694,7 @@ sx126x_status_t sx126x_set_tx_params( const void* context, const int8_t pwr_in_d
     buf[1] = ( uint8_t ) pwr_in_dbm;
     buf[2] = ( uint8_t ) ramp_time;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_TX_PARAMS, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_TX_PARAMS, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_lora_mod_params( const void* context, const sx126x_mod_params_lora_t* params )
@@ -710,8 +710,8 @@ sx126x_status_t sx126x_set_lora_mod_params( const void* context, const sx126x_mo
     buf[3] = ( uint8_t )( params->cr );
     buf[4] = params->ldro & 0x01;
 
-    status = ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_MODULATION_PARAMS_LORA, 0, 0 );
-
+    //CHECK THIS ERRORS WITH OBC status = ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_MODULATION_PARAMS_LORA, 0, 0 );
+    status = 0;
     if( status == SX126X_STATUS_OK )
     {
         // WORKAROUND - Modulation Quality with 500 kHz LoRa Bandwidth, see datasheet DS_SX1261-2_V1.2 §15.1
@@ -737,8 +737,8 @@ sx126x_status_t sx126x_set_lora_pkt_params( const void* context, const sx126x_pk
     buf[5] = ( uint8_t )( params->crc_is_on ? 1 : 0 );
     buf[6] = ( uint8_t )( params->invert_iq_is_on ? 1 : 0 );
 
-    status = ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_PKT_PARAMS_LORA, 0, 0 );
-
+    //CHECK THIS ERRORS WITH OBC status = ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_PKT_PARAMS_LORA, 0, 0 );
+    status = 0;
     // WORKAROUND - Optimizing the Inverted IQ Operation, see datasheet DS_SX1261-2_V1.2 §15.4
     if( status == SX126X_STATUS_OK )
     {
@@ -777,7 +777,7 @@ sx126x_status_t sx126x_set_cad_params( const void* context, const sx126x_cad_par
     buf[6] = ( uint8_t )( params->cad_timeout >> 8 );
     buf[7] = ( uint8_t )( params->cad_timeout >> 0 );
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_CAD_PARAMS, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_CAD_PARAMS, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_buffer_base_address( const void* context, const uint8_t tx_base_address,
@@ -790,7 +790,7 @@ sx126x_status_t sx126x_set_buffer_base_address( const void* context, const uint8
     buf[1] = tx_base_address;
     buf[2] = rx_base_address;
 
-    return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_BUFFER_BASE_ADDRESS, 0, 0 );
+    //CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_BUFFER_BASE_ADDRESS, 0, 0 );
 }
 
 sx126x_status_t sx126x_set_lora_symb_nb_timeout( const void* context, const uint8_t nb_of_symbs )
@@ -802,8 +802,8 @@ sx126x_status_t sx126x_set_lora_symb_nb_timeout( const void* context, const uint
 
     buf[1] = nb_of_symbs;
 
-    status = ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_LORA_SYMB_NUM_TIMEOUT, 0, 0 );
-
+    //CHECK THIS ERRORS WITH OBC status = ( sx126x_status_t ) sx126x_hal_write( context, buf, SX126X_SIZE_SET_LORA_SYMB_NUM_TIMEOUT, 0, 0 );
+    status = 0;
     if( ( status == SX126X_STATUS_OK ) && ( nb_of_symbs >= 64 ) )
     {
         uint8_t mant = nb_of_symbs >> 1;
@@ -835,8 +835,8 @@ sx126x_status_t sx126x_get_status( const void* context, sx126x_chip_status_t* ra
 
     buf[0] = SX126X_GET_STATUS;
 
-    status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_GET_STATUS, &status_local, 1 );
-
+    //CHECK THIS ERRORS WITH OBC status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_GET_STATUS, &status_local, 1 );
+    status = 0;
     if( status == SX126X_STATUS_OK )
     {
         radio_status->cmd_status =
@@ -876,9 +876,9 @@ sx126x_status_t sx126x_get_lora_pkt_status( const void* context, sx126x_pkt_stat
 
     buf[0] = SX126X_GET_PKT_STATUS;
 
-    status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_GET_PKT_STATUS, pkt_status_local,
-                                                  sizeof( sx126x_pkt_status_lora_t ) );
-
+    //CHECK THIS ERRORS WITH OBC status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_GET_PKT_STATUS, pkt_status_local,
+    //CHECK THIS ERRORS WITH OBC                                               sizeof( sx126x_pkt_status_lora_t ) );
+    status = 0;
     if( status == SX126X_STATUS_OK )
     {
         pkt_status->rssi_pkt_in_dbm        = ( int8_t )( -pkt_status_local[0] >> 1 );
@@ -897,8 +897,8 @@ sx126x_status_t sx126x_get_rssi_inst( const void* context, int16_t* rssi_in_dbm 
 
     buf[0] = SX126X_GET_RSSI_INST;
 
-    status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_GET_RSSI_INST, &rssi_local, 1 );
-
+    //CHECK THIS ERRORS WITH OBC status = ( sx126x_status_t ) sx126x_hal_read( context, buf, SX126X_SIZE_GET_RSSI_INST, &rssi_local, 1 );
+    status = 0;
     if( status == SX126X_STATUS_OK )
     {
         *rssi_in_dbm = ( int8_t )( -rssi_local >> 1 );
@@ -942,12 +942,12 @@ sx126x_status_t sx126x_reset_stats( const void* context )
 
 sx126x_status_t sx126x_reset( const void* context )
 {
-    return ( sx126x_status_t ) sx126x_hal_reset( context );
+	//CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_reset( context );
 }
 
 sx126x_status_t sx126x_wakeup( const void* context )
 {
-    return ( sx126x_status_t ) sx126x_hal_wakeup( context );
+	//CHECK THIS ERRORS WITH OBC return ( sx126x_status_t ) sx126x_hal_wakeup( context );
 }
 
 sx126x_status_t sx126x_get_device_errors( const void* context, sx126x_errors_mask_t* errors )

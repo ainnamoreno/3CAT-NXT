@@ -467,10 +467,12 @@ typedef uint16_t sx126x_errors_mask_t;
 //
 
 
-/*!
+/*!		//CHECK THIIIIIIIIIIIIIIIIIIIIIIIIIIIIIS
  * Hardware IO IRQ callback function definition
  */
 typedef void ( DioIrqHandler )( void );
+
+void SX126xInit( DioIrqHandler dioIrq );
 
 
 /**
