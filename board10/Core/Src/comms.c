@@ -275,6 +275,7 @@ void stateMachine(void){
         {
             if( PacketReceived == true )
             {
+				//HERE YOU CAN CHECK THE PACKET!!!!!!!!!
                 PacketReceived = false;     // Reset flag
                 RxCorrectCnt++;         // Update RX counter
 				#if(FULL_DBG)
