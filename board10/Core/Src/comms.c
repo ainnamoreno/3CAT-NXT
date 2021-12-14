@@ -287,7 +287,7 @@ void stateMachine(void){
             {
                 if (CadRx == CAD_SUCCESS)
                 {
-                	//PUT HERE THE CODE TO WITHDRAW THE INFO FROM THE BUFFER
+                	//PUT HERE THE CODE TO WITHDRAW THE INFO FROM THE BUFFER AND HERE TOOO
 
                     //channelActivityDetectedCnt++;   // Update counter
 					#if(FULL_DBG)
