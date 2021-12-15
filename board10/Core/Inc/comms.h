@@ -68,6 +68,8 @@
 
 #define RX_TIMEOUT_VALUE                 	0			//IF NEEDED
 #define BUFFER_SIZE                         38 			// Define the payload size here
+#define UPLINK_BUFFER_SIZE					19
+#define ACK_PAYLOAD_LENGTH					5			//ACK payload data length
 #define WINDOW_SIZE							40
 
 //CHECK THIS DEFINITIONS (I DO NOT KNOW IF THEY ARE CORRECT OR WHICH VALUE TO USE)

@@ -28,9 +28,8 @@
 
 /*OBC*/
 #define RESET2  			01	/*The PQ might take a reset*/
-#define NOMINAL				02
-#define LOW					03
-#define CRITICAL			04
+#define EXIT_LOW_POWER      02
+#define SET_TIME            03 //Synchronises the time of both the satellite and the ground station
 
 //#define NACKDATA  			08	/*If it is received if the GS do not receive all the segments of the data.
  	 	 	 	 	 	 	 	 //*The PQ will send since the last segment received correctly.*/
@@ -41,21 +40,21 @@
 
 
 /*COMMS*/
-#define SENDDATA  			20	/*If the acquired photo or spectogram is needed to be send to GS*/
-#define SENDTELEMETRY  		21
-#define STOPSENDINGDATA  	22
-#define ACKDATA  			23	/*It is received when all the data is received correctly*/
+#define SEND_DATA  			20	/*If the acquired photo or spectogram is needed to be send to GS*/
+#define SEND_TELEMETRY  	21
+#define STOP_SENDING_DATA  	22
+#define ACK_DATA  			23	/*It is received when all the data is received correctly*/
 #define SET_SF				24
 #define SET_CRC				25
 
 /*CAMARA*/
-#define TAKEPHOTO 			30	/*Might rotate the PQ into the right position +
+#define TAKE_PHOTO 			30	/*Might rotate the PQ into the right position +
 								wait until it is in the position where the picture is wanted to be taken.*/
 #define SET_PHOTO_RESOL		31	//Photo Resolution
 #define PHOTO_COMPRESSION   32
 
 /*PAYLOAD 2: ELECTROSMOG ANTENNA*/
-#define TAKERF  			40
+#define TAKE_RF  			40
 #define F_MIN				41
 #define F_MAX				42
 #define DELTA_F				43

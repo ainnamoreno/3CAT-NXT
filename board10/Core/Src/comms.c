@@ -31,11 +31,38 @@
  * CHECK SLEEP MODE OF SX1262 WHILE NOT TX OR RX
  * MULTY THREAD
  * MATRIX OF READ-SALOMON => FADING IN SEVERAL PACKETS
- * SF AND CRC STORED IN MEMORY AND CHANGED BY TELECOMMANDS
- * send sf and crc at telemetry packet
- * THINK TELEMETRY PACKET!!!!!!!!!!
- * If stop sending in the middle of a window => set to zero count_packet[]
+ * FET: SF AND CRC STORED IN MEMORY AND CHANGED BY TELECOMMANDS
+ * FET: send sf and crc at telemetry packet
+ * FET: THINK TELEMETRY PACKET!!!!!!!!!!
+ * DIR-LI ALS DEL OBC: If stop sending in the middle of a window => set to zero count_packet[]
  * CAD_TIMER_TIMEOUT => CHANGE THE VALUE IN COMMS.H (and the next 6 definitions too)
+ */
+
+
+
+
+
+/* NO SE ON HO HAURIA DE POSAR PERO BUENO DE MOMENT AQUI ESTÀ:
+ * PD: Al document TELECOMMANDS & TELEMTRY està tot definit i amb dibujitos ya, qualsevol cosa la podem arreglar
+ *
+ * uint8_t telecommand[UPLINK_BUFFER_SIZE];
+ * bool sendConfig = false;
+ * bool sendTelemetry = false;
+ *
+ * telecommand = Buffer;    // AQUI ALGO NO EM QUADRA GENS, SI TX I RX TENEN EL MATEIX BUFFER PERO ELS PAQUETS SON DIFERENTS AIXO PETARÀ PER TOT ARREU
+ * if(telecommand[UPLINK_BUFFER_SIZE] == ACK_DATA){     //Telecommand[UPLINK_BUFFER_SIZE] mira l'ultim byte de info del packet telecommand, que es on esta el codi ID del telecommand (ho he decidit aixi per comoditat)
+ * 		//Si hem rebut un ACK:
+ * 		for(i=0; i<ACK_PAYLOAD_LENGTH; i++){
+ * 			ack[i] = telecommand[i];
+ * 		}
+ * }
+ * else if(telecommand[UPLINK_BUFFER_SIZE] == SEND_CONFIG){
+ * 		sendConfig = true;  //This will trigger the TX function to send the config packet first
+ * }
+ * else if(telecommand[UPLINK_BUFFER_SIZE] == SEND_TELEMETRY){
+ * 		sendTelemetry = true;
+ * }
+ *
  */
 
 //#include "sx126x-hal.h"
@@ -161,6 +188,13 @@ void tx_function(void){
 	//configuration();
 	if (!full_window)
 	{
+		/*if(sendConfig == true){
+		 *  TX el packet que estigui a la posicio de memoria de sendConfig
+		 *  sendConfig = false; //cal comprovar que GS l'ha rebut ok?
+		 *else if(sendTelemetry == true){
+		 *	TX el packet que estigui a la posicio de memoria de sendTelemetry
+		 *	sendTelemetry = false; //cal comprovar que GS l'ha rebut ok?
+		 */
 		packaging(); //Start the TX by packaging all the data that will be transmitted
 		//SX126xSetPayload(); //Aquesta fa el writebuffer, sha de posar direccions com a la pag 48 del datasheet
 		Radio.Send( Buffer, BUFFER_SIZE );
@@ -171,7 +205,6 @@ void tx_function(void){
 /* I THINK THAT THIS FUNCTION IS NOT NEEDED*/
 void rx_function(void){
 	Radio.Rx( RX_TIMEOUT_VALUE );
-
 };
 
 void packaging(void){
