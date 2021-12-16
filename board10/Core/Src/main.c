@@ -161,7 +161,7 @@ int main(void)
 				sensorReadings(&hi2c1); /*Updates the values of temperatures, voltages and currents*/
 				/*ADCS tasks needed??*/
 				//Add Rx mode here
-				RTC
+
 			}
 			break;
 
