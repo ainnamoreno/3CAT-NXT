@@ -92,7 +92,7 @@ int main(void)
   uint8_t payload_state[] = {TRUE}; //bool which indicates when do we need to go to PAYLOAD state
   uint8_t comms_state[] = {FALSE}; //bool which indicates if we are in region of contact with GS, then go to COMMS state
   uint8_t payload_lect[] = {0x05}, comms_lect[] = {0xA3};
-  uint8_t requestData[] = {0x01, 0x00}; //todo borrar
+  uint8_t requestData[] = {0x01, 0x00};
   bool deployment_state;
   bool deploymentRF_state; //indicates if the deployment of the Payload antenna has been deployed
   bool detumble_state; //indicates if the detumbling process is completed
@@ -138,32 +138,32 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//VERSION FUNCIONAL
+	  // ^ Request frame
+	//	framePointer = 0;
+	if (!runCommand(&huart1, 0x36, requestData, sizeof(requestData), 5, true))
+	{
+		HAL_Delay(1);
+	}
+	//	"^ Frame requested"
 
-		// ^ Request frame
-		//	framePointer = 0;
+	// ~
+	getFrameLength(&huart1);
+	//	"~ Frame length: "
 
-			if (!runCommand(&huart1, 0x36, requestData, sizeof(requestData), 5, true))
-			{
-				HAL_Delay(1);
-			}
-		//	"^ Frame requested"
+	// *
+	retrieveImage(&huart1);
+	HAL_Delay(1);
 
-		// ~
-			getFrameLength(&huart1);
-		//	"~ Frame length: "
+	uint8_t clearData[] = {0x01, 0x03};
+	if (!runCommand(&huart1, 0x36, clearData, sizeof(clearData), 5, true))
+	{
+		HAL_Delay(1);
+	}
 
-			// *
-			retrieveImage(&huart1);
+//VERSION BETA
+//	  captureAndRetrieveImage(&huart1);
 
-			// = Clear cache
-			uint8_t clearData[] = {0x01, 0x02};
-			if (!runCommand(&huart1, 0x36, clearData, sizeof(clearData), 5, true))
-			{
-			}
-//	    	payload_state = false;
-			currentState = IDLE;
-			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
-			break;
 
 	/* USER CODE END WHILE */
 
