@@ -15,7 +15,8 @@
 #ifndef INC_FLASH_H_
 #define INC_FLASH_H_
 
-#include "stdint.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 #define PHOTO_ADDR 					0x08020000
 #define PAYLOAD_STATE_ADDR 			0x08008000
@@ -42,7 +43,7 @@ void Write_Flash(uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofby
 
 void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numberofbytes);
 
-void Check_Redundancy(uint32_t Address, uint8_t *RxBuf1, uint8_t *RxBuf2, uint8_t *RxBuf3, uint8_t *RxDef);
+void Check_Redundancy(uint32_t Address, uint8_t *RxDef, uint16_t numberofbytes);
 
 void Read_Flash(uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numberofbytes);
 

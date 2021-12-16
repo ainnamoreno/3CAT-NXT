@@ -320,19 +320,27 @@ void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numb
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void Check_Redundancy(uint32_t Address, uint8_t *RxBuf1, uint8_t *RxBuf2, uint8_t *RxBuf3, uint8_t *RxDef){
-	Flash_Read_Data(Address, RxBuf1, sizeof(RxBuf1));
-	Flash_Read_Data(Address + 0x4000, RxBuf2, sizeof(RxBuf2));
-	Flash_Read_Data(Address + 0x8000, RxBuf3, sizeof(RxBuf3));
+void Check_Redundancy(uint32_t Address, uint8_t *RxDef, uint16_t numberofbytes){
+	uint8_t lect1[numberofbytes], lect2[numberofbytes], lect3[numberofbytes];
+	Flash_Read_Data(Address, lect1, numberofbytes);
+	Flash_Read_Data(Address + 0x4000, lect2, numberofbytes);
+	Flash_Read_Data(Address + 0x8000, lect3, numberofbytes);
 
-	if(*RxBuf1 == *RxBuf2 || *RxBuf1 == *RxBuf3) {
-		Flash_Read_Data(Address, RxDef, sizeof(RxDef));
+	bool coincidence12 = true, coincidence13 = true, coincidence23 = true;
+	for (int i = 0; i < numberofbytes; i++) {
+		if (lect1[i] != lect2[i]) coincidence12 = false;
+		if (lect1[i] != lect3[i]) coincidence13 = false;
+		if (lect2[i] != lect3[i]) coincidence23 = false;
 	}
-	else if(*RxBuf2 == *RxBuf3) {
-		Flash_Read_Data(Address + 0x4000, RxDef, sizeof(RxDef));
+	if(coincidence12 || coincidence13) {
+		Flash_Read_Data(Address, RxDef, numberofbytes);
 	}
+	else if(coincidence23) {
+		Flash_Read_Data(Address + 0x4000, RxDef, numberofbytes);
+	}
+
 	else {
-		*RxDef = *RxBuf1; /*PREGUNTAR QUÈ FER QUAN NO COINCIDEIX CAP LECTURA (POC PROBABLE)*/
+		*RxDef = lect1; /*PREGUNTAR QUÈ FER QUAN NO COINCIDEIX CAP LECTURA (POC PROBABLE)*/
 	}
 }
 
@@ -353,8 +361,7 @@ void Check_Redundancy(uint32_t Address, uint8_t *RxBuf1, uint8_t *RxBuf2, uint8_
  **************************************************************************************/
 void Read_Flash(uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numberofbytes) {
 	if (StartSectorAddress >= 0x08000000 && StartSectorAddress <= 0x0800BFFF) {
-		uint8_t lect1[numberofbytes], lect2[numberofbytes], lect3[numberofbytes];
-		Check_Redundancy(StartSectorAddress, lect1, lect2, lect3, RxBuf);
+		Check_Redundancy(StartSectorAddress, RxBuf, numberofbytes);
 	}
 	else {
 		Flash_Read_Data(StartSectorAddress, RxBuf, numberofbytes);

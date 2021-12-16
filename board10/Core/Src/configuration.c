@@ -40,22 +40,6 @@ int checkbatteries(){
 
 /**************************************************************************************
  *                                                                                    *
- * Function:  detumble                                                 		  		  *
- * --------------------                                                               *
- * Checks the gyroscope measurements and stabilizes the satellite. 					  *
- * It is called when the satellite is ejected from the deployer						  *
- *                                                                                    *
- *  hi2c: I2C to read outputs from gyroscope					    				  *
- *															                          *
- *  returns: Nothing									                              *
- *                                                                                    *
- **************************************************************************************/
-void detumble(I2C_HandleTypeDef *hi2c) {
-
-}
-
-/**************************************************************************************
- *                                                                                    *
  * Function:  deployment                                               		  		  *
  * --------------------                                                               *
  * Induces a current through a resistor in order to burn the nylon wire and deploy	  *
@@ -123,17 +107,16 @@ void check_position() {
  *                                                                                    *
  **************************************************************************************/
 void init(I2C_HandleTypeDef *hi2c){
-	bool detumble_state, deployment_state, deploymentRF_state;
-	Read_Flash(DETUMBLE_STATE_ADDR, &detumble_state, 1);
+	bool deployment_state, deploymentRF_state;
 	Read_Flash(DEPLOYMENT_STATE_ADDR, &deployment_state, 1);
 	Read_Flash(DEPLOYMENTRF_STATE_ADDR, &deploymentRF_state, 1);
 
 	if(!system_state(&hi2c)) currentState = CONTINGENCY;
 	else {
-		if(!detumble_state) detumble(&hi2c);
 		if(!deployment_state)	deployment(&hi2c);
 		//Just in the PocketQube with the RF antenna
 		if(!deploymentRF_state) deploymentRF(&hi2c);
+		detumble(&hi2c);
 		currentState = IDLE;
 	}
 }

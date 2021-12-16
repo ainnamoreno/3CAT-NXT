@@ -80,7 +80,7 @@
 //enum BatteryLevel {NOMINAL=90, LOW=85, CRITICAL=80, SURVIVAL=0}; //todo talk EPS
 
 /* USER CODE BEGIN EFP */
-enum MachineState {IDLE, COMMS, PAYLOAD, CONTINGENCY};
+enum MachineState {INIT, IDLE, COMMS, PAYLOAD, CONTINGENCY, SUNSAFE, SURVIVAL};
 uint8_t currentState;
 
 

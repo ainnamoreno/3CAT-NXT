@@ -47,10 +47,6 @@ void deployment(I2C_HandleTypeDef *hi2c);
  *Once confirmed the proper deployment of the antenna,  write deploymentRF_state = true in the EEPROM memory*/
 void deploymentRF(I2C_HandleTypeDef *hi2c);
 
-/*Detumble the satellite (ADCS subsystem)
- *Once it is stabilized, write detumble_state = true in the EEPROM memory */
-void detumble(I2C_HandleTypeDef *hi2c);
-
 /*We'll have a file (SPG4) which will tell us the position
  *Check if we are in the region of contact with GS */
 void check_position(void);

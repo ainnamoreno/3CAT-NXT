@@ -133,7 +133,7 @@ void retrieveImage(UART_HandleTypeDef *huart)
 		frameLength -= toRead;
 	}
 
-	Flash_Write_Data(PHOTO_ADDR, dataVect, sizeof(dataVect));
+	Write_Flash(PHOTO_ADDR, dataVect, sizeof(dataVect));
 }
 
 int min(int x, int y)

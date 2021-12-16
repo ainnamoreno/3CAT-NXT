@@ -78,7 +78,7 @@ static void MX_USB_OTG_FS_HCD_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	currentState = IDLE;
+	currentState = INIT;
 
   /* USER CODE END 1 */
 
@@ -90,17 +90,16 @@ int main(void)
   /* USER CODE BEGIN Init */
   pthread_t thread_comms;
 
-  uint8_t payload_state = 0xBB; //bool which indicates when do we need to go to PAYLOAD state
-  uint8_t comms_state[] = {FALSE}; //bool which indicates if we are in region of contact with GS, then go to COMMS state
-  uint8_t payload_lect;
+  bool payload_state; //bool which indicates when do we need to go to PAYLOAD state
+  bool comms_state; //bool which indicates if we are in region of contact with GS, then go to COMMS state
+  uint8_t payload_lect[3];
   uint8_t requestData[] = {0x01, 0x00}; //todo borrar
   bool deployment_state = true;
   bool deploymentRF_state = false; //indicates if the deployment of the Payload antenna has been deployed
   bool detumble_state; //indicates if the detumbling process is completed
   Temperatures temp;
   //todo read different boolean states
-	initsensors(&hi2c1);
-	init(&hi2c1);
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -118,16 +117,22 @@ int main(void)
   MX_I2C1_Init();
   MX_USB_OTG_FS_HCD_Init();
   /* USER CODE BEGIN 2 */
-
-  	Write_Flash(PAYLOAD_STATE_ADDR, &payload_state, 1);
-
-  	Read_Flash(PAYLOAD_STATE_ADDR, &payload_lect, 1);
-  	comms_state[0] = 0x66666666;
+  	  bool aux = true;
+  	Write_Flash(PAYLOAD_STATE_ADDR, &aux, 1);
+//  	uint8_t data1[] = {0x23,0xcc, 0xAA}, data2[] = {0x23,0xcc, 0xBA}, data3[] = {0x23,0xcc, 0xAA};
+//  	Flash_Write_Data(0x08008000, &data1, 3);
+//  	Flash_Write_Data(0x0800C000, &data2, 3);
+//  	Flash_Write_Data(0x08010000, &data3, 3);
+//
+//  	Read_Flash(PAYLOAD_STATE_ADDR, &payload_lect, 3);
+//  	comms_state[0] = 0x66666666;
   //  temp.fields.temp1 = 0x1A;
   //  temp.fields.temp3 = 0x8F;
   //  Flash_Write_Data(0x0800C000, temp.raw, len(temp.raw));
   //  Temperatures temp_lect;
   //  Flash_Read_Data(0x0800C000, temp_lect.raw, 2);
+
+
 
   /* USER CODE END 2 */
 
@@ -135,19 +140,29 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		system_state(&hi2c1);
+//		system_state(&hi2c1);
 		switch (currentState)
 		{
+
+		case INIT:
+			init(&hi2c1);
+			initsensors(&hi2c1);
+			break;
 
 		case IDLE:
 			/* if a telecomand to use the payload/comms is received, go to PAYLOADS/COMMS state */
 			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
-			check_position();
-			if(payload_state && checkmemory())	currentState = PAYLOAD; /*payload becomes true if a telecommand to acquire data is received*/
-			else if(comms_state)	currentState = COMMS;	/*comms becomes true when we have acquired the data and we need to send it*/
-			sensorReadings(&hi2c1); /*Updates the values of temperatures, voltages and currents*/
-			/*ADCS tasks needed??*/
-			//Add Rx mode here
+			else {
+				check_position();
+				Read_Flash(PAYLOAD_STATE_ADDR, &payload_state, 1);
+				Read_Flash(COMMS_STATE_ADDR, &comms_state, 1);
+				if(payload_state) currentState = PAYLOAD; /*payload becomes true if a telecommand to acquire data is received*/
+				else if(comms_state)	currentState = COMMS;	/*comms becomes true when we have acquired the data and we need to send it*/
+				sensorReadings(&hi2c1); /*Updates the values of temperatures, voltages and currents*/
+				/*ADCS tasks needed??*/
+				//Add Rx mode here
+				RTC
+			}
 			break;
 
 		/*Is needed to listen periodically with the receiver or timer from IDLE state? -> COMMS part*/
@@ -167,7 +182,11 @@ int main(void)
 			currentState = IDLE;
 			break;
 		case PAYLOAD:
-
+//			if(PHOTO_TIME - /*¿¿*/RCC/*??*/ < threshold) {
+//				rotatePhoto();
+//				while(PHOTO_TIME - /*¿¿*/RCC/*??*/ > threshold_petit); PENSAR ALGUNA COSA, COMENTAR DAVID
+//				takePhoto();
+//			}
 		// ^ Request frame
 		//	framePointer = 0;
 
@@ -198,7 +217,6 @@ int main(void)
 			/*Turn STM32 to Stop Mode or Standby Mode
 			 *Loop to check at what batterylevel are we
 			 *Out of CONTINGENCY State when batterylevel is NOMINAL
-			 *todo CHECK IF WE CAN EXECUTE SOME TASKS OR NOT IN STANDBY MODE*/
 			 //while(checkbatteries() /= NOMINAL){
 			 //}
 			 /*Return to Run Mode*/

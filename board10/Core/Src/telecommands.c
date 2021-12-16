@@ -60,6 +60,7 @@ void process_telecommand(uint8_t header, uint8_t info) {
 		Write_Flash(CRC_ADDR, info, 1);
 		break;
 	case TAKEPHOTO:
+		/*GUARDAR TEMPS FOTO?*/
 
 		break;
 	case SET_PHOTO_RESOL:
