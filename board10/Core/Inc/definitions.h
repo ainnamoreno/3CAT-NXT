@@ -37,6 +37,8 @@
 #define NOMINAL				02
 #define LOW					03
 #define CRITICAL			04
+#define EXIT_LOW_POWER		05
+#define SET_TIME			06
 
 //#define NACKDATA  			08	/*If it is received if the GS do not receive all the segments of the data.
  	 	 	 	 	 	 	 	 //*The PQ will send since the last segment received correctly.*/
@@ -44,6 +46,7 @@
 #define SET_CONSTANT_KP		10
 #define TLE  				11 /*Packet from GS with the new TLE, update it inside memory
  	 	 	 	 	 	 	  the SPG4 uses it to propagate the orbit*/
+#define SET_GYRO_RES		12
 
 
 /*COMMS*/
@@ -53,6 +56,7 @@
 #define ACKDATA  			23	/*It is received when all the data is received correctly*/
 #define SET_SF				24
 #define SET_CRC				25
+#define SEND_CALIBRATION	26
 
 /*CAMARA*/
 #define TAKEPHOTO 			30	/*Might rotate the PQ into the right position +
@@ -101,20 +105,20 @@ typedef union __attribute__ ((__packed__)) Temperatures {
 
 /*Total of 12bytes -> rounded to 16bytes -> 2 uit64_t*/
 typedef union __attribute__ ((__packed__)) Voltages {
-    uint64_t raw[2];
+    uint64_t raw[1];
     struct __attribute__((__packed__)) {
     	uint8_t voltage1;
-    	uint8_t voltage2;
-    	uint8_t voltage3;
-    	uint8_t voltage4;
-    	uint8_t voltage5;
-    	uint8_t voltage6;
-    	uint8_t voltage7;
-    	uint8_t voltage8;
-    	uint8_t voltage9;
-    	uint8_t voltage10;
-    	uint8_t voltage11;
-    	uint8_t voltage12;
+//    	uint8_t voltage2;
+//    	uint8_t voltage3;
+//    	uint8_t voltage4;
+//    	uint8_t voltage5;
+//    	uint8_t voltage6;
+//    	uint8_t voltage7;
+//    	uint8_t voltage8;
+//    	uint8_t voltage9;
+//    	uint8_t voltage10;
+//    	uint8_t voltage11;
+//    	uint8_t voltage12;
     }fields;
 } Voltages;
 

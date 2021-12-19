@@ -11,6 +11,8 @@
 #include "definitions.h"
 #include "flash.h"
 
+#define CONFIG_SIZE		13
+
 void process_telecommand(uint8_t header, uint8_t info);
 
 #endif /* INC_TELECOMMANDS_H_ */

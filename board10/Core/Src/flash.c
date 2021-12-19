@@ -297,7 +297,7 @@ void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numb
 		StartSectorAddress += 1;
 		RxBuf++;
 		numberofbytes--;
-		if (numberofbytes == 0x00) break;
+		if (numberofbytes == 0) break;
 	}
 }
 

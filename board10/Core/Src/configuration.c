@@ -13,29 +13,28 @@
  */
 #include "configuration.h"
 
-static const uint8_t GYRO_ADDR = 0x68 << 1; //gyroscope address, 0x68 or 0x69 depending on the SA0 pin
-static const uint8_t MAG_ADDR = 0x30 << 1; //magnetometer address
-static const uint8_t BATTSENSOR_ADDR = 0x34 << 1; //battery sensor address
-
 /**************************************************************************************
  *                                                                                    *
  * Function:  checkbatteries                                                 		  *
  * --------------------                                                               *
- * Checks the current battery level													  *
+ * Checks the current battery level	and stores it in the NVM						  *
  *                                                                                    *
- *  No inputs													    				  *
+ *  hi2c: I2C to read battery capacity							    				  *
  *															                          *
- *  returns: Battery level								                              *
+ *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-int checkbatteries(){
-	BatteryLevels batterylevel;
-	double actual_level, percentage;
-//	actual_level = reading_EPS; //reading_EPS is still to be defined, will be acquireVoltage()?, acquirecurrent()?
-//	percentage = (actual_level/MAX_BAT_LEVEL)*100;
-//	batterylevel.fields.totalbattery = (int) percentage;
-	return batterylevel.fields.totalbattery;
+void checkbatteries(I2C_HandleTypeDef *hi2c){
+	uint8_t percentage;
+	HAL_StatusTypeDef ret;
 
+	ret = HAL_I2C_Master_Transmit(hi2c, BATTSENSOR_ADDR, (uint8_t*)0x06, 1, 500); //we want to read from the register 0x06
+	if (ret != HAL_OK) {
+
+	} else {
+		HAL_I2C_Master_Receive(hi2c, BATTSENSOR_ADDR, &percentage, 1, 500);
+	}
+	Write_Flash(BATT_LEVEL_ADDR, &percentage, 1);
 }
 
 /**************************************************************************************
@@ -172,15 +171,19 @@ void initsensors(I2C_HandleTypeDef *hi2c) {
  *                                                                                    *
  **************************************************************************************/
 bool system_state(I2C_HandleTypeDef *hi2c){
-	if(checkbatteries() < LOW) return false;
-	else if(checkbatteries() < NOMINAL) {
+	uint8_t low, nominal, critical, battery_capacity;
+	checkbatteries(&hi2c);
+	Read_Flash(BATT_LEVEL_ADDR, &battery_capacity, 1);
+	Read_Flash(LOW_ADDR, &low, 1);
+	Read_Flash(NOMINAL_ADDR, &nominal, 1);
+	Read_Flash(CRITICAL_ADDR, &critical, 1);
+	if(battery_capacity < low) return false;
+	else if(battery_capacity < nominal) {
 
 	}
 
 	//checkbatteries();
 	if (!checktemperature(&hi2c)) return false;
-	//EPS_state(); ???
-	//illumination_state(); ???
 	return true;
 }
 
@@ -200,7 +203,7 @@ bool system_state(I2C_HandleTypeDef *hi2c){
  **************************************************************************************/
 bool checktemperature(I2C_HandleTypeDef *hi2c){
 	Temperatures temp;
-	Flash_Read_Data(0x08008014, temp.raw, sizeof(temp));
+	Flash_Read_Data(TEMP_ADDR, &temp.raw, sizeof(temp));
 	int i, cont = 0;
 	for (i=1; i<=7; i++){  //number of sensors not defined yet
 

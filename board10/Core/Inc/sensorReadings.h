@@ -15,15 +15,16 @@
 #define INC_SENSORREADINGS_H_
 
 #include "definitions.h"
+#include "configuration.h"
 
 /*Overwrites into the Temperatures Union the temperature of the 8 sensors*/
 void acquireTemp(I2C_HandleTypeDef *hi2c);
 
 /*Overwrites into the Voltages Union the readings of the 12 voltages*/
-void acquireVoltage();
+void acquireVoltage(I2C_HandleTypeDef *hi2c);
 
 /*Overwrites into the Currents Union the readings of the 7 currents*/
-void acquireCurrents();
+void acquireCurrents(I2C_HandleTypeDef *hi2c);
 
 /*Includes the functions above*/
 void sensorReadings(I2C_HandleTypeDef *hi2c);
