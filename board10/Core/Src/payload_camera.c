@@ -2,7 +2,7 @@
  * payload_camera.c
  *
  *  Created on: Nov 25, 2021
- *      Author: USUARIO
+ *      Author: Jaume
  */
 
 #include <payload_camera.h>
@@ -17,11 +17,16 @@ uint8_t commInit[2] = {0x56, 0x00};
 uint8_t commCapture = 0x36;
 uint32_t bSize = 128;
 
+//COMANDOS
+uint8_t captureImageCmd[] = {0x01, 0x00};
+uint8_t stopCaptureCmd[] = {0x01, 0x03};
+uint8_t setCompressibilityCmd[] = {0x05, 0x01, 0x01, 0x12, 0x04, 0x00};
+uint8_t setResolutionCmd[] = {0x05, 0x04, 0x01, 0x00, 0x19, 0x00};
+
 //NO ACABADA
 uint8_t readResponse(UART_HandleTypeDef *huart, uint8_t expLength, uint8_t attempts){
-  int i = 0;
-  bufferLength = 0;
-
+//  int i = 0;
+//  bufferLength = 0;
 //  while (attempts != i && bufferLength != expLength)//si attemps == i o si bufferLenght == expLength sale del while
 //  {
 ////    if ()//mirar si tenemos algo que leer
@@ -78,6 +83,24 @@ bool runCommand(UART_HandleTypeDef *huart, uint8_t command, uint8_t *hexData, ui
   return true;
 }
 
+bool captureImage(UART_HandleTypeDef *huart){
+	return runCommand(huart, 0x36, captureImageCmd, sizeof(captureImageCmd), 5, true);
+}
+
+void stopCapture(UART_HandleTypeDef *huart){
+	runCommand(huart, 0x36, stopCaptureCmd, sizeof(stopCaptureCmd), 5, true);
+}
+
+void setCopressibility(UART_HandleTypeDef *huart, uint8_t compressibility){
+	setCompressibilityCmd[5] = compressibility;
+	runCommand(huart, 0x31, setCompressibilityCmd, sizeof(setCompressibilityCmd), 5, true);
+}
+
+void setResolution(UART_HandleTypeDef *huart, uint8_t resolution){
+	setResolutionCmd[5] = resolution;
+	runCommand(huart, 0x31, setResolutionCmd, sizeof(setResolutionCmd), 5, true);
+}
+
 void getFrameLength(UART_HandleTypeDef *huart)
 { // ~ Get frame length
   uint8_t hexData[] = {0x01, 0x00};
@@ -96,14 +119,13 @@ void getFrameLength(UART_HandleTypeDef *huart)
 
 void retrieveImage(UART_HandleTypeDef *huart)
 { // * Retrieve photo data
+
 	uint8_t dataVect[frameLength];
-  //BORRAR
-	//MEMSET
+
+	//todo errase this bucle. Use the memset function (search this function on the internet)
 	for(int i = 0; i < frameLength; i++){
 	  dataVect[i] = 0;
 	}
-
-  //BORRAR
 
 	while (frameLength > 0)
 	{
@@ -124,7 +146,6 @@ void retrieveImage(UART_HandleTypeDef *huart)
 			HAL_Delay(1);
 		}
 
-		//AIXO HO HAURIEM DE MODIFICAT AMB OBC
 		for(int i = 0; i < toRead; i++){
 		  dataVect[framePointer+i] = dataBuffer[i];
 		}
@@ -134,6 +155,25 @@ void retrieveImage(UART_HandleTypeDef *huart)
 	}
 
 	Write_Flash(PHOTO_ADDR, dataVect, sizeof(dataVect));
+}
+
+bool takePhoto(UART_HandleTypeDef *huart){
+	//takePhoto
+	if(!captureImage(huart)){
+		//todo create a protocol in order to handle errors in the communication
+		return false;
+	}
+
+	//actualize frameLength
+	getFrameLength(huart);
+
+	//saves the image to the flash mem
+	retrieveImage(huart);
+
+	//stops capture
+	stopCapture(huart);
+
+	return true;
 }
 
 int min(int x, int y)

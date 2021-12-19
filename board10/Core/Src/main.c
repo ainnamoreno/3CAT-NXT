@@ -187,27 +187,9 @@ int main(void)
 //				while(PHOTO_TIME - /*¿¿*/RCC/*??*/ > threshold_petit); PENSAR ALGUNA COSA, COMENTAR DAVID
 //				takePhoto();
 //			}
-		// ^ Request frame
-		//	framePointer = 0;
 
-			if (!runCommand(&huart1, 0x36, requestData, sizeof(requestData), 5, true))
-			{
-				HAL_Delay(1);
-			}
-		//	"^ Frame requested"
+			takePhoto(&huart1);
 
-		// ~
-			getFrameLength(&huart1);
-		//	"~ Frame length: "
-
-			// *
-			retrieveImage(&huart1);
-
-			// = Clear cache
-			uint8_t clearData[] = {0x01, 0x02};
-			if (!runCommand(&huart1, 0x36, clearData, sizeof(clearData), 5, true))
-			{
-			}
 //	    	payload_state = false;
 			currentState = IDLE;
 			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
