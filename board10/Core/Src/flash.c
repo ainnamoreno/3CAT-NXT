@@ -136,41 +136,6 @@ static uint32_t GetSector(uint32_t Address)
   return sector;
 }
 
-
-
-
-
-void float2Bytes(uint8_t * ftoa_bytes_temp,float float_variable)
-{
-    union {
-      float a;
-      uint8_t bytes[4];
-    } thing;
-
-    thing.a = float_variable;
-
-    for (uint8_t i = 0; i < 4; i++) {
-      ftoa_bytes_temp[i] = thing.bytes[i];
-    }
-
-}
-
-float Bytes2float(uint8_t * ftoa_bytes_temp)
-{
-    union {
-      float a;
-      uint8_t bytes[4];
-    } thing;
-
-    for (uint8_t i = 0; i < 4; i++) {
-    	thing.bytes[i] = ftoa_bytes_temp[i];
-    }
-
-   float float_variable =  thing.a;
-   return float_variable;
-}
-
-
 /**************************************************************************************
  *                                                                                    *
  * Function:  Flash_Write_Data                                                 		  *
@@ -260,7 +225,8 @@ uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t 
  *                                                                                    *
  **************************************************************************************/
 void Write_Flash(uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofbytes) {
-	if (StartSectorAddress >= 0x08000000 && StartSectorAddress <= 0x0800BFFF) {
+	if (StartSectorAddress >= 0x08000000 && StartSectorAddress <= 0x0800BFFF) { //addresses with redundancy
+		// The addresses are separated 0x4000 positions
 		Flash_Write_Data(StartSectorAddress, Data, numberofbytes);
 		Flash_Write_Data(StartSectorAddress + 0x4000, Data, numberofbytes);
 		Flash_Write_Data(StartSectorAddress + 0x8000, Data, numberofbytes);
@@ -287,13 +253,7 @@ void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numb
 {
 	while (1)
 	{
-
 		*RxBuf = *(__IO uint8_t *)StartSectorAddress;
-//		if (*RxBuf == 0xffffffff)
-//		{
-//			*RxBuf = '\0';
-//			break;
-//		}
 		StartSectorAddress += 1;
 		RxBuf++;
 		numberofbytes--;
@@ -312,10 +272,8 @@ void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numb
  * address is separated 0x4000 positions in memory									  *
  *                                                                                    *
  *  Address: first address to be read		                              			  *
- *	RxBuf1: Buffer to store the lecture from the first address						  *
- *	RxBuf2: Buffer to store the lecture from the second address						  *
- *	RxBuf3: Buffer to store the lecture from the third address						  *
  *	RxDef: Buffer to store the lecture that coincides at least 2 times				  *
+ *	numberofbytes: Data size in bytes												  *
  *															                          *
  *  returns: Nothing									                              *
  *                                                                                    *
@@ -360,7 +318,7 @@ void Check_Redundancy(uint32_t Address, uint8_t *RxDef, uint16_t numberofbytes){
  *                                                                                    *
  **************************************************************************************/
 void Read_Flash(uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numberofbytes) {
-	if (StartSectorAddress >= 0x08000000 && StartSectorAddress <= 0x0800BFFF) {
+	if (StartSectorAddress >= 0x08000000 && StartSectorAddress <= 0x0800BFFF) { //addresses with redundancy
 		Check_Redundancy(StartSectorAddress, RxBuf, numberofbytes);
 	}
 	else {

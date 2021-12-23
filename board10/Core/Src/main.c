@@ -92,13 +92,6 @@ int main(void)
 
   bool payload_state; //bool which indicates when do we need to go to PAYLOAD state
   bool comms_state; //bool which indicates if we are in region of contact with GS, then go to COMMS state
-  uint8_t payload_lect[3];
-  uint8_t requestData[] = {0x01, 0x00}; //todo borrar
-  bool deployment_state = true;
-  bool deploymentRF_state = false; //indicates if the deployment of the Payload antenna has been deployed
-  bool detumble_state; //indicates if the detumbling process is completed
-  Temperatures temp;
-  //todo read different boolean states
 
   /* USER CODE END Init */
 
@@ -117,22 +110,6 @@ int main(void)
   MX_I2C1_Init();
   MX_USB_OTG_FS_HCD_Init();
   /* USER CODE BEGIN 2 */
-  	  bool aux = true;
-  	Write_Flash(PAYLOAD_STATE_ADDR, &aux, 1);
-//  	uint8_t data1[] = {0x23,0xcc, 0xAA}, data2[] = {0x23,0xcc, 0xBA}, data3[] = {0x23,0xcc, 0xAA};
-//  	Flash_Write_Data(0x08008000, &data1, 3);
-//  	Flash_Write_Data(0x0800C000, &data2, 3);
-//  	Flash_Write_Data(0x08010000, &data3, 3);
-//
-//  	Read_Flash(PAYLOAD_STATE_ADDR, &payload_lect, 3);
-//  	comms_state[0] = 0x66666666;
-  //  temp.fields.temp1 = 0x1A;
-  //  temp.fields.temp3 = 0x8F;
-  //  Flash_Write_Data(0x0800C000, temp.raw, len(temp.raw));
-  //  Temperatures temp_lect;
-  //  Flash_Read_Data(0x0800C000, temp_lect.raw, 2);
-
-
 
   /* USER CODE END 2 */
 
@@ -140,7 +117,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//		system_state(&hi2c1);
+		system_state(&hi2c1);
 		switch (currentState)
 		{
 

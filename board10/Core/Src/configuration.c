@@ -107,8 +107,8 @@ void check_position() {
  **************************************************************************************/
 void init(I2C_HandleTypeDef *hi2c){
 	bool deployment_state, deploymentRF_state;
-	Read_Flash(DEPLOYMENT_STATE_ADDR, &deployment_state, 1);
-	Read_Flash(DEPLOYMENTRF_STATE_ADDR, &deploymentRF_state, 1);
+	Read_Flash(DEPLOYMENT_STATE_ADDR, &deployment_state, 1); //read the indicator of the deployment of comms antenna
+	Read_Flash(DEPLOYMENTRF_STATE_ADDR, &deploymentRF_state, 1); //read the indicator of the deployment of PL2 antenna
 
 	if(!system_state(&hi2c)) currentState = CONTINGENCY;
 	else {
@@ -135,14 +135,12 @@ void initsensors(I2C_HandleTypeDef *hi2c) {
 	HAL_StatusTypeDef ret;
 	//GYROSCOPE CONFIGURATION
 	ret = HAL_I2C_Master_Transmit(hi2c, GYRO_ADDR, (uint8_t*)0x1A, 1, 1000); //write in the register 0x1A
-	//wait for ACK?
 	if (ret != HAL_OK) {
 
 	} else {
 //		HAL_I2C_Master_Transmit(&hi2c1, GYRO_ADDR, /*data to register 0x1A*/, 1, 1000);
 	}
 	ret = HAL_I2C_Master_Transmit(hi2c, GYRO_ADDR, (uint8_t*)0x1B, 1, 1000); //write in the register 0x1B
-	//wait for ACK?
 	if (ret != HAL_OK) {
 
 	} else {
@@ -151,8 +149,6 @@ void initsensors(I2C_HandleTypeDef *hi2c) {
 
 	//MAGNETOMETER CONFIGURATION mirar a quin registre s'ha d'escriure
 //	ret = HAL_I2C_Master_Transmit(&hi2c, MAG_ADDR, /**/, 1, HAL_MAX_DELAY);
-	//wait for ACK?
-
 
 }
 
@@ -173,16 +169,18 @@ void initsensors(I2C_HandleTypeDef *hi2c) {
 bool system_state(I2C_HandleTypeDef *hi2c){
 	uint8_t low, nominal, critical, battery_capacity;
 	checkbatteries(&hi2c);
+
+	/*Read from memory the thresholds LOW, NOMINAL, CRITICAL and BATTERY LEVEL*/
 	Read_Flash(BATT_LEVEL_ADDR, &battery_capacity, 1);
 	Read_Flash(LOW_ADDR, &low, 1);
 	Read_Flash(NOMINAL_ADDR, &nominal, 1);
 	Read_Flash(CRITICAL_ADDR, &critical, 1);
+
 	if(battery_capacity < low) return false;
 	else if(battery_capacity < nominal) {
 
 	}
 
-	//checkbatteries();
 	if (!checktemperature(&hi2c)) return false;
 	return true;
 }

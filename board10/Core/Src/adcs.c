@@ -41,9 +41,9 @@ void detumble(I2C_HandleTypeDef *hi2c) {
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void readPhotodiodes(ADC_HandleTypeDef *hadc) { // crec que s'haurien de passar els 4 ADC
-	/*3 photodiodes estan directament connectats a 3 dels 4 ADCs
-	 * els altres 3 photodiodes estan a les entrades 1,2 i 3 d'un multiplexor*/
+void readPhotodiodes(ADC_HandleTypeDef *hadc) { // I think the four ADC should be passed as parameters
+	/*3 photodiodes are directly connected to 3 of the 4 ADC pins
+	 * the other 3 photodiodes are connected through the inputs 1,2 and 3 of a multiplexor*/
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
 	singlePhotodiode(hadc);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);

@@ -165,7 +165,7 @@ void acquireCurrents(I2C_HandleTypeDef *hi2c){
  *  		 																		  *
  **************************************************************************************/
 void sensorReadings(I2C_HandleTypeDef *hi2c){
-	acquireTemp(&hi2c);
-	acquireVoltage(&hi2c);
-	acquireCurrents(&hi2c);
+	acquireTemp(hi2c);
+	acquireVoltage(hi2c);
+	acquireCurrents(hi2c);
 }
