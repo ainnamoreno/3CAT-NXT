@@ -159,15 +159,19 @@ int main(void)
 			currentState = IDLE;
 			break;
 		case PAYLOAD:
+			/* The idea of this state is to modify the coils' current in each iteration
+			 * (when payload_state is true), and once the PQ reaches the final position
+			 * in which the photo will be taken, try to maintain the position until it
+			 * is the correct moment to take the photo*/
 //			if(PHOTO_TIME - /*¿¿*/RCC/*??*/ < threshold) {
 //				rotatePhoto();
-//				while(PHOTO_TIME - /*¿¿*/RCC/*??*/ > threshold_petit); PENSAR ALGUNA COSA, COMENTAR DAVID
-//				takePhoto();
+//				if(PHOTO_TIME - /*¿¿*/RCC/*??*/ < small_threshold) {
+//					takePhoto();
+//					resetCommsParams();
+//					Write_Flash(PAYLOAD_STATE_ADDR, FALSE, 1);
+//				}
 //			}
 
-			takePhoto(&huart1);
-
-//	    	payload_state = false;
 			currentState = IDLE;
 			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
 			break;
