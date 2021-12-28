@@ -78,8 +78,8 @@ static void MX_USB_OTG_FS_HCD_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	initsensors(&hi2c1);
 	currentState = INIT;
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -123,7 +123,6 @@ int main(void)
 
 		case INIT:
 			init(&hi2c1);
-			initsensors(&hi2c1);
 			break;
 
 		case IDLE:
