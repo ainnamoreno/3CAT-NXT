@@ -123,6 +123,7 @@ int main(void)
 
 		case INIT:
 			init(&hi2c1);
+			Write_Flash(PREVIOUS_STATE_ADDR, INIT, 1);
 			break;
 
 		case IDLE:
@@ -137,7 +138,7 @@ int main(void)
 				sensorReadings(&hi2c1); /*Updates the values of temperatures, voltages and currents*/
 				/*ADCS tasks needed??*/
 				//Add Rx mode here
-
+				Write_Flash(PREVIOUS_STATE_ADDR, IDLE, 1);
 			}
 			break;
 
@@ -156,12 +157,15 @@ int main(void)
 			//else if(comms_timer_state) sendtelemetry(); /* loop that sends the telemetry data to "COMMS" */
 			//comms_state = false;
 			currentState = IDLE;
+			Write_Flash(PREVIOUS_STATE_ADDR, COMMS, 1);
 			break;
 		case PAYLOAD:
 			/* The idea of this state is to modify the coils' current in each iteration
 			 * (when payload_state is true), and once the PQ reaches the final position
 			 * in which the photo will be taken, try to maintain the position until it
-			 * is the correct moment to take the photo*/
+			 * is the correct moment to take the photo
+			 * The code is commented because most variables were not defined and gave
+			 * errors, do not think it's a wrong code! */
 //			if(PHOTO_TIME - /*¿¿*/RCC/*??*/ < threshold) {
 //				rotatePhoto();
 //				if(PHOTO_TIME - /*¿¿*/RCC/*??*/ < small_threshold) {
@@ -171,8 +175,14 @@ int main(void)
 //				}
 //			}
 
+			/*If that checks if the clock's time has passed the Payload time*/
+//			if(/*¿¿*/RCC/*??*/ > PHOTO_TIME) {
+//				Write_Flash(PAYLOAD_STATE_ADDR, FALSE, 1);
+//			}
+
 			currentState = IDLE;
 			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
+			Write_Flash(PREVIOUS_STATE_ADDR, PAYLOAD, 1);
 			break;
 
 		case CONTINGENCY:
@@ -183,7 +193,16 @@ int main(void)
 			 //}
 			 /*Return to Run Mode*/
 			 currentState = IDLE;
+			 Write_Flash(PREVIOUS_STATE_ADDR, CONTINGENCY, 1);
 			 //Una opció és fer reset total del satelit quan surti de contingency
+			break;
+
+		case SUNSAFE:
+			Write_Flash(PREVIOUS_STATE_ADDR, SUNSAFE, 1);
+			break;
+
+		case SURVIVAL:
+			Write_Flash(PREVIOUS_STATE_ADDR, SURVIVAL, 1);
 			break;
 		/*If we reach this state something has gone wrong*/
 		default:
