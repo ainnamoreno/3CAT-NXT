@@ -167,14 +167,12 @@ void initsensors(I2C_HandleTypeDef *hi2c) {
  *                                                                                    *
  **************************************************************************************/
 bool system_state(I2C_HandleTypeDef *hi2c){
-	uint8_t low, nominal, critical, battery_capacity;
+	uint8_t nominal, battery_capacity;
 	checkbatteries(&hi2c);
 
-	/*Read from memory the thresholds LOW, NOMINAL, CRITICAL and BATTERY LEVEL*/
+	/*Read from memory the threshold NOMINAL and the current BATTERY LEVEL*/
 	Read_Flash(BATT_LEVEL_ADDR, &battery_capacity, 1);
-	Read_Flash(LOW_ADDR, &low, 1);
 	Read_Flash(NOMINAL_ADDR, &nominal, 1);
-	Read_Flash(CRITICAL_ADDR, &critical, 1);
 
 	if(battery_capacity < nominal) return false;
 
