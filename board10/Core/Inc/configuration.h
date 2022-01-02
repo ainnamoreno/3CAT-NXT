@@ -32,9 +32,6 @@ void initsensors(I2C_HandleTypeDef *hi2c);
 /*Compute the level of battery and updates batterylevel*/
 void checkbatteries(I2C_HandleTypeDef *hi2c);
 
-/*Check if the memory have enough space to store a photo/spectrum*/
-bool checkmemory(void);
-
 /*Check the temperature of the 8 sensors, returns true if the temperature is between TEMP_MAX and TEMP_MIN*/
 bool checktemperature(I2C_HandleTypeDef *hi2c);
 

@@ -176,11 +176,12 @@ bool system_state(I2C_HandleTypeDef *hi2c){
 	Read_Flash(NOMINAL_ADDR, &nominal, 1);
 	Read_Flash(CRITICAL_ADDR, &critical, 1);
 
-	if(battery_capacity < low) return false;
-	else if(battery_capacity < nominal) {
+	if(battery_capacity < nominal) return false;
 
-	}
-
+	/*If checktemperature returns false, there are different cases which must be distinguished:
+	 * 	- More than three temperature sensors are hot => start rotating the satellite
+	 * 	- Battery temperature is out of range => THIS CASE MUST BE STUDIED
+	 * 	- MCU temperature out of operating range => THIS CASE MUST BE STUDIED */
 	if (!checktemperature(&hi2c)) return false;
 	return true;
 }
@@ -249,24 +250,6 @@ void heater(int state){
 
 }
 
-/**************************************************************************************
- *                                                                                    *
- * Function:  checkmemory	                                             	  		  *
- * --------------------                                                               *
- * Since there will be enough space in the flash memory to store the data coming	  *
- * from the payloads, this function must decide if the photo/spectogram already 	  *
- * stored in memory can be overwritten												  *
- *																					  *
- *  hi2c: I2C to read from the temperature sensors				    				  *
- *															                          *
- *  returns: False if more than 3 solar panels are too hot or battery temperature 	  *
- *  		 is too low																  *
- *  		 True otherwise								                              *
- *  		 																		  *
- **************************************************************************************/
-bool checkmemory(){
-
-}
 
 
 
