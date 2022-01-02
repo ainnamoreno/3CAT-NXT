@@ -168,19 +168,20 @@ void initsensors(I2C_HandleTypeDef *hi2c) {
  **************************************************************************************/
 bool system_state(I2C_HandleTypeDef *hi2c){
 	uint8_t nominal, battery_capacity;
+
+	/*If checktemperature returns false, there are different cases which must be distinguished:
+	 * 	- More than three temperature sensors are hot => start rotating the satellite
+	 * 	- Battery temperature is too hot => THIS CASE MUST BE STUDIED
+	 * 	- MCU temperature out of operating range => THIS CASE MUST BE STUDIED */
+	if (!checktemperature(hi2c)) /*rotate_satellite*/;
+
 	checkbatteries(hi2c);
 
 	/*Read from memory the threshold NOMINAL and the current BATTERY LEVEL*/
 	Read_Flash(BATT_LEVEL_ADDR, &battery_capacity, 1);
 	Read_Flash(NOMINAL_ADDR, &nominal, 1);
-
 	if(battery_capacity < nominal) return false;
 
-	/*If checktemperature returns false, there are different cases which must be distinguished:
-	 * 	- More than three temperature sensors are hot => start rotating the satellite
-	 * 	- Battery temperature is out of range => THIS CASE MUST BE STUDIED
-	 * 	- MCU temperature out of operating range => THIS CASE MUST BE STUDIED */
-	if (!checktemperature(hi2c)) return false;
 	return true;
 }
 
@@ -188,13 +189,12 @@ bool system_state(I2C_HandleTypeDef *hi2c){
  *                                                                                    *
  * Function:  checktemperature                                             	  		  *
  * --------------------                                                               *
- * Checks if all the temperatures are in their corresponding ranges. This function    *
+ * Checks if all the temperatures are in their corresponding ranges. This function is *
  * also responsible for activating or deactivating the battery heater				  *
  *																					  *
  *  hi2c: I2C to read from the temperature sensors				    				  *
  *															                          *
- *  returns: False if more than 3 solar panels are too hot or battery temperature 	  *
- *  		 is too low																  *
+ *  returns: False if more than 3 solar panels are too hot 							  *
  *  		 True otherwise								                              *
  *  		 																		  *
  **************************************************************************************/
