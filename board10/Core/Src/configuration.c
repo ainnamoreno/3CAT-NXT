@@ -168,7 +168,7 @@ void initsensors(I2C_HandleTypeDef *hi2c) {
  **************************************************************************************/
 bool system_state(I2C_HandleTypeDef *hi2c){
 	uint8_t nominal, battery_capacity;
-	checkbatteries(&hi2c);
+	checkbatteries(hi2c);
 
 	/*Read from memory the threshold NOMINAL and the current BATTERY LEVEL*/
 	Read_Flash(BATT_LEVEL_ADDR, &battery_capacity, 1);
@@ -180,7 +180,7 @@ bool system_state(I2C_HandleTypeDef *hi2c){
 	 * 	- More than three temperature sensors are hot => start rotating the satellite
 	 * 	- Battery temperature is out of range => THIS CASE MUST BE STUDIED
 	 * 	- MCU temperature out of operating range => THIS CASE MUST BE STUDIED */
-	if (!checktemperature(&hi2c)) return false;
+	if (!checktemperature(hi2c)) return false;
 	return true;
 }
 
