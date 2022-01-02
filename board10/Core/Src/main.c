@@ -121,11 +121,6 @@ int main(void)
 		switch (currentState)
 		{
 
-		case INIT:
-			init(&hi2c1);
-			Write_Flash(PREVIOUS_STATE_ADDR, INIT, 1);
-			break;
-
 		case IDLE:
 			/* State that periodically checks the satellite general state (batteries,
 			 * temperatures, voltages...
@@ -204,6 +199,11 @@ int main(void)
 
 		case SURVIVAL:
 			Write_Flash(PREVIOUS_STATE_ADDR, SURVIVAL, 1);
+			break;
+
+		case INIT:
+			init(&hi2c1);
+			Write_Flash(PREVIOUS_STATE_ADDR, INIT, 1);
 			break;
 		/*If we reach this state something has gone wrong*/
 		default:
