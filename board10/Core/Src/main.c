@@ -89,7 +89,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   pthread_t thread_comms;
-
+  uint8_t payload_time[4];
   bool payload_state; //bool which indicates when do we need to go to PAYLOAD state
   bool comms_state; //bool which indicates if we are in region of contact with GS, then go to COMMS state
 
@@ -127,22 +127,22 @@ int main(void)
 			break;
 
 		case IDLE:
-			/* if a telecomand to use the payload/comms is received, go to PAYLOADS/COMMS state */
+			/* State that periodically checks the satellite general state (batteries,
+			 * temperatures, voltages...
+			 * From this state the satellite can go to PAYLOAD when a telecommand to
+			 * take data is received, to COMMS when we are in range of contact with GS
+			 * or to contingency if systemstate() returns false */
 			if(!system_state(&hi2c1)) currentState = CONTINGENCY;
 			else {
 				check_position();
 				Read_Flash(PAYLOAD_STATE_ADDR, &payload_state, 1);
 				Read_Flash(COMMS_STATE_ADDR, &comms_state, 1);
-				if(payload_state) currentState = PAYLOAD; /*payload becomes true if a telecommand to acquire data is received*/
-				else if(comms_state)	currentState = COMMS;	/*comms becomes true when we have acquired the data and we need to send it*/
+				if(comms_state)	currentState = COMMS;	/*comms becomes true when we are in range of contact with GS*/
+				else if(payload_state) currentState = PAYLOAD; /*payload becomes true if a telecommand to acquire data is received*/
 				sensorReadings(&hi2c1); /*Updates the values of temperatures, voltages and currents*/
-				/*ADCS tasks needed??*/
-				//Add Rx mode here
 				Write_Flash(PREVIOUS_STATE_ADDR, IDLE, 1);
 			}
 			break;
-
-		/*Is needed to listen periodically with the receiver or timer from IDLE state? -> COMMS part*/
 		case COMMS:	// This might refer ONLY refer to TX!!!
 			//configuration();
 			//pthread_create(&thread_comms, NULL, stateMachine(), NULL);
@@ -166,9 +166,10 @@ int main(void)
 			 * is the correct moment to take the photo
 			 * The code is commented because most variables were not defined and gave
 			 * errors, do not think it's a wrong code! */
-//			if(PHOTO_TIME - /*¿¿*/RCC/*??*/ < threshold) {
+//			Read_Flash(PL_TIME_ADDR, &payload_time, 4); //Read from memory the time to use the payload
+//			if(payload_time - /*¿¿*/RCC/*??*/ < threshold) {
 //				rotatePhoto();
-//				if(PHOTO_TIME - /*¿¿*/RCC/*??*/ < small_threshold) {
+//				if(payload_time - /*¿¿*/RCC/*??*/ < small_threshold) {
 //					takePhoto();
 //					resetCommsParams();
 //					Write_Flash(PAYLOAD_STATE_ADDR, FALSE, 1);
@@ -176,7 +177,7 @@ int main(void)
 //			}
 
 			/*If that checks if the clock's time has passed the Payload time*/
-//			if(/*¿¿*/RCC/*??*/ > PHOTO_TIME) {
+//			if(/*¿¿*/RCC/*??*/ > payload_time) {
 //				Write_Flash(PAYLOAD_STATE_ADDR, FALSE, 1);
 //			}
 
