@@ -17,7 +17,17 @@
 
 
 
+/**
+  * Waits for data to be received and stores the information to the global variable dataBuffer
+  */
 uint8_t readResponse(UART_HandleTypeDef *huart, uint8_t expLength, uint8_t attempts);
+
+
+/**
+  * Transmitts information using the USART protocol
+  * reads the response using readResponse
+  * Veryfy if the received data is the expected one
+  */
 bool runCommand(UART_HandleTypeDef *huart, uint8_t command, uint8_t *hexData, uint8_t dataArrayLength, uint8_t expLength, bool doFlush);
 
 /**
@@ -40,25 +50,29 @@ void retrieveImage(UART_HandleTypeDef *huart);
 
 /**
   * #5
-  *
+  * Stops the capture
   */
 void stopCapture(UART_HandleTypeDef *huart);
 
 /**
   * #6
-  *
+  * Sets the compressibility of the image
   */
 void setCopressibility(UART_HandleTypeDef *huart, uint8_t compressibility);
 
 /**
   * #7
-  *
+  * Sets the resolution of the image
   */
 void setResolution(UART_HandleTypeDef *huart, uint8_t resolution);
 
 /**
   * #8
-  *
+  * Executes the different commands needed to take a photo
+  * captureImage
+  * getFrameLength
+  * retrieveImage
+  * stopCapture
   */
 bool takePhoto(UART_HandleTypeDef *huart);
 
