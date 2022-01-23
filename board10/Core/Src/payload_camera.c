@@ -23,7 +23,7 @@ uint8_t stopCaptureCmd[] = {0x01, 0x03};
 uint8_t setCompressibilityCmd[] = {0x05, 0x01, 0x01, 0x12, 0x04, 0x00};
 uint8_t setResolutionCmd[] = {0x05, 0x04, 0x01, 0x00, 0x19, 0x00};
 
-//NO ACABADA
+//NOT FINISHED
 uint8_t readResponse(UART_HandleTypeDef *huart, uint8_t expLength, uint8_t attempts){
 //  int i = 0;
 //  bufferLength = 0;
@@ -71,16 +71,10 @@ bool runCommand(UART_HandleTypeDef *huart, uint8_t command, uint8_t *hexData, ui
   }
 
   // Data should always be 76, 00, command, 00
-  //CREO QUE PUEDO HACER UN RETURNE DIRECTO MUCHO MAS BONITO
-  if (dataBuffer[0] != 0x76 ||
-      dataBuffer[1] != 0x0 ||
-      dataBuffer[2] != command ||
-      dataBuffer[3] != 0x0)
-  {
-    return false;
-  }
-
-  return true;
+  return dataBuffer[0] == 0x76 &&
+	  dataBuffer[1] == 0x0 &&
+	  dataBuffer[2] == command &&
+	  dataBuffer[3] == 0x0;
 }
 
 bool captureImage(UART_HandleTypeDef *huart){
@@ -92,11 +86,17 @@ void stopCapture(UART_HandleTypeDef *huart){
 }
 
 void setCopressibility(UART_HandleTypeDef *huart, uint8_t compressibility){
-	setCompressibilityCmd[5] = compressibility;
+	//TODO the compressibility should be a telecomand and must be extracted from the memory of the STM32, talk with OBC to agree where will be stored this information
+	//If the compressibility variable is stored in memory, is not needed to give it as a parameter to the function, use Read_Flash function;
+
+	setCompressibilityCmd[5] = compressibility; //The value should be obtained from memory 
 	runCommand(huart, 0x31, setCompressibilityCmd, sizeof(setCompressibilityCmd), 5, true);
 }
 
 void setResolution(UART_HandleTypeDef *huart, uint8_t resolution){
+	//TODO the resolution should be a telecomand and must be extracted from the memory of the STM32, talk with OBC to agree where will be stored this information
+	//If the resolution variable is stored in memory, is not needed to give it as a parameter to the function, use Read_Flash function;
+	
 	setResolutionCmd[5] = resolution;
 	runCommand(huart, 0x31, setResolutionCmd, sizeof(setResolutionCmd), 5, true);
 }
