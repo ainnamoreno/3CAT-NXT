@@ -10,7 +10,10 @@
  * \author    Pol Simon
  *
  * \author    David Reiss
+ *
+ * \modified on: 01/03/2022
  */
+
 #include "configuration.h"
 
 /**************************************************************************************
@@ -19,9 +22,9 @@
  * --------------------                                                               *
  * Checks the current battery level	and stores it in the NVM						  *
  *                                                                                    *
- *  hi2c: I2C to read battery capacity							    				  *
+ * hi2c: I2C to read battery capacity							    				  *
  *															                          *
- *  returns: Nothing									                              *
+ * returns: Nothing									                              	  *
  *                                                                                    *
  **************************************************************************************/
 void checkbatteries(I2C_HandleTypeDef *hi2c){
