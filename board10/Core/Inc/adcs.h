@@ -20,8 +20,19 @@
  *Once it is stabilized, write detumble_state = true in the EEPROM memory */
 void detumble(I2C_HandleTypeDef *hi2c);
 
+void tumble(I2C_HandleTypeDef *hi2c);
+
+void* AngularVelocity(I2C_HandleTypeDef *hi2c1);
+
 void readPhotodiodes(ADC_HandleTypeDef *hadc);
 
 void singlePhotodiode(ADC_HandleTypeDef *hadc);
+
+void* MagneticField(I2C_HandleTypeDef *hi2c1);
+
+void* cross(int A[], int B[]);
+
+double norm(double A[]);
+
 
 #endif /* INC_ADCS_H_ */
