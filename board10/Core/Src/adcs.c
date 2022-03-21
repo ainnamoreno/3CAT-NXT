@@ -13,8 +13,11 @@
 
 #include "adcs.h"
 #include "math.h"
+#include "string.h"
 
 double k=0;
+
+
 
 /**************************************************************************************
  *                                                                                    *
@@ -25,14 +28,11 @@ double k=0;
  *  returns: vector with the cross product									          *
  *                                                                                    *
  **************************************************************************************/
-void* cross(double A[3], double B[3])
- {
-	double x, y, z;
-	x = A[1]*B[2]-A[2]*B[1];
-	y = A[2]*B[0]-A[0]*B[2];
-	z = A[0]*B[1]-A[1]*B[0];
-	double q[3] = {x, y, z};
-	return q;
+double cross(double *A, double *B, double *res){
+
+	res[0] = A[1]*B[2]-A[2]*B[1];
+	res[1] = A[2]*B[0]-A[0]*B[2];
+	res[2] = A[0]*B[1]-A[1]*B[0];
 
  }
 /**************************************************************************************
@@ -65,15 +65,28 @@ double norm(double A[3]){
  **************************************************************************************/
 void detumble(I2C_HandleTypeDef *hi2c) {
 
-	double IdealTorque, MagneticDipole;
-	double w_target[];
-	double mag_read[];
-	w_target= AngularVelocity();
-	mag_read= MagneticField();
-	IdealTorque = -(k*w_target);
-	MagneticDipole = cross(mag_read,IdealTorque)/pow(norm(mag_read),2);
+	double idealTorque[3], gyr_read[3], mag_read[3], intensity[3], magneticDipole[3], w[3], m[3];
+	double maxMagneticDipole1 = 0.02359;
+	double maxMagneticDipole2 = 0.03234;
+	double maxIntensity1 = 0.14681;
+	double maxIntensity2 = 0.1495;
+	AngularVelocity(hi2c, w);
+	MagneticField(hi2c,m);
+	memcpy(gyr_read, w, 3);
+	memcpy(mag_read, m, 3);
+	idealTorque[0]=-k*gyr_read[0];
+	idealTorque[1]=-k*gyr_read[1];
+	idealTorque[2]=-k*gyr_read[2];
+	cross(mag_read,idealTorque, magneticDipole)/pow(norm(mag_read),2);
+	if(magneticDipole>0){
+		intensity[0] = (magneticDipole[0]*maxIntensity1)/maxMagneticDipole1;
+	}else{
+		intensity[0] = (magneticDipole[0]*maxIntensity2)/maxMagneticDipole2;
+	}
 
-
+	intensity[1] = (magneticDipole[1]*maxIntensity2)/maxMagneticDipole2;
+	intensity[2] = (magneticDipole[2]*maxIntensity2)/maxMagneticDipole2;
+	CurrentToCoil(intensity);
 
 
 }
@@ -81,8 +94,8 @@ void detumble(I2C_HandleTypeDef *hi2c) {
  *                                                                                    *
  * Function:  tumble                                                 		  		  *
  * --------------------                                                               *
- * Checks the gyroscope measurements and destabilizes the satellite. 					  *
- * It is called when the satellite is experiencing a lot of heat and wants to cool down					  *
+ * Checks the gyroscope measurements and destabilizes the satellite. 				  *
+ * It is called when the satellite is experiencing a lot of heat and wants to cool dow*
  *                                                                                    *
  *  hi2c: I2C to read outputs from gyroscope					    				  *
  *															                          *
@@ -91,21 +104,35 @@ void detumble(I2C_HandleTypeDef *hi2c) {
  **************************************************************************************/
 void tumble(I2C_HandleTypeDef *hi2c) {
 
-	double IdealTorque, MagneticDipole;
-	double w_target[];
-	double mag_read[];
-	w_target= AngularVelocity();
-	mag_read= MagneticField();
-	IdealTorque = (k*w_target);
-	MagneticDipole = cross(mag_read,IdealTorque)/pow(norm(mag_read),2);
+	double idealTorque[3], gyr_read[3], mag_read[3], intensity[3], magneticDipole[3], w[3], m[3];
+	double maxMagneticDipole1 = 0.02359;
+	double maxMagneticDipole2 = 0.03234;
+	double maxIntensity1 = 0.14681;
+	double maxIntensity2 = 0.1495;
+	AngularVelocity(hi2c, w);
+	MagneticField(hi2c,m);
+	memcpy(gyr_read, w, 3);
+	memcpy(mag_read, m, 3);
+	idealTorque[0]=k*gyr_read[0];
+	idealTorque[1]=k*gyr_read[1];
+	idealTorque[2]=k*gyr_read[2];
+	cross(mag_read,idealTorque, magneticDipole)/pow(norm(mag_read),2);
+	if(magneticDipole>0){
+		intensity[0] = (magneticDipole[0]*maxIntensity1)/maxMagneticDipole1;
+	}else{
+		intensity[0] = (magneticDipole[0]*maxIntensity2)/maxMagneticDipole2;
+	}
 
+	intensity[1] = (magneticDipole[1]*maxIntensity2)/maxMagneticDipole2;
+	intensity[2] = (magneticDipole[2]*maxIntensity2)/maxMagneticDipole2;
+	CurrentToCoil(intensity);
 
 
 }
 /****************************************************************************/
 /* AngularVelocity: This function read the data from the gyroscope */
 /****************************************************************************/
-void* AngularVelocity(I2C_HandleTypeDef *hi2c1){
+double AngularVelocity(I2C_HandleTypeDef *hi2c1, double *w){
 	uint8_t gx[2];
 	uint8_t gy[2];
 	uint8_t gz[2];
@@ -122,9 +149,11 @@ void* AngularVelocity(I2C_HandleTypeDef *hi2c1){
 	gyrox.gz_h = (double)((uint8_t)gz[0]<<8|gz[1]);
 	//After we have readed the data from the gyro we have to divide by 131
 	//Check the datasheet for more information
-	double w[] = {gyrox.gx_h/s, gyrox.gy_h/s, gyrox.gz_h/s};
-	return w;
-	}
+	w[0] = gyrox.gx_h/s;
+	w[1] = gyrox.gy_h/s;
+	w[2] = gyrox.gz_h/s;
+
+}
 /**************************************************************************************
  *                                                                                    *
  * Function:  readPhotodiodes                                                 		  *
@@ -141,17 +170,21 @@ void readPhotodiodes(ADC_HandleTypeDef *hadc) { // I think the four ADC should b
 	/*3 photodiodes are directly connected to 3 of the 4 ADC pins
 	 * the other 3 photodiodes are connected through the inputs 1,2 and 3 of a multiplexor*/
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
-	singlePhotodiode(hadc);
+	singlePhotodiode(&hadc);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
-	singlePhotodiode(hadc);
+	singlePhotodiode(&hadc);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
-	singlePhotodiode(hadc);
+	singlePhotodiode(&hadc);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
 
 }
 
+void sun_vector(ADC_HandleTypeDef *hadc, double *s){
+
+
+}
 /**************************************************************************************
  *                                                                                    *
  * Function:  singlePhotodiode                                         		  		  *
@@ -165,32 +198,51 @@ void readPhotodiodes(ADC_HandleTypeDef *hadc) { // I think the four ADC should b
  **************************************************************************************/
 void singlePhotodiode(ADC_HandleTypeDef *hadc) {
 
+
+
 }
 
 /****************************************************************************/
 /* MagneticField: This function read the data from the magnetorquer */
 /****************************************************************************/
-void* MagneticField(I2C_HandleTypeDef *hi2c1){
+double MagneticField(I2C_HandleTypeDef *hi2c1, double *m){
 	uint8_t x[2], y[2], z[2];
 	double mx, my, mz;
 	//Check the datasheet to see how the data comes
-	HAL_I2C_Master_Transmit(&hi2c1, 0x30<<1, 0x00, 1, 1000);
-	HAL_I2C_Master_Receive(&hi2c1, 0x30<<1, x[0], 1, 1000);
-	HAL_I2C_Master_Transmit(&hi2c1, 0x30<<1, 0x01, 1, 1000);
-	HAL_I2C_Master_Receive(&hi2c1, 0x30<<1, x[1], 1, 1000);
-	HAL_I2C_Master_Transmit(&hi2c1, 0x30<<1, 0x02, 1, 1000);
-	HAL_I2C_Master_Receive(&hi2c1, 0x30<<1, y[0], 1, 1000);
-	HAL_I2C_Master_Transmit(&hi2c1, 0x30<<1, 0x03, 1, 1000);
-	HAL_I2C_Master_Receive(&hi2c1, 0x30<<1, y[1], 1, 1000);
-	HAL_I2C_Master_Transmit(&hi2c1, 0x30<<1, 0x04, 1, 1000);
-	HAL_I2C_Master_Receive(&hi2c1, 0x30<<1, z[0], 1, 1000);
-	HAL_I2C_Master_Transmit(&hi2c1, 0x30<<1, 0x05, 1, 1000);
-	HAL_I2C_Master_Receive(&hi2c1, 0x30<<1, z[1], 1, 1000);
+	HAL_I2C_Master_Transmit(hi2c1, 0x30<<1, 0x00, 1, 1000);
+	HAL_I2C_Master_Receive(hi2c1, 0x30<<1, x[0], 1, 1000);
+	HAL_I2C_Master_Transmit(hi2c1, 0x30<<1, 0x01, 1, 1000);
+	HAL_I2C_Master_Receive(hi2c1, 0x30<<1, x[1], 1, 1000);
+	HAL_I2C_Master_Transmit(hi2c1, 0x30<<1, 0x02, 1, 1000);
+	HAL_I2C_Master_Receive(hi2c1, 0x30<<1, y[0], 1, 1000);
+	HAL_I2C_Master_Transmit(hi2c1, 0x30<<1, 0x03, 1, 1000);
+	HAL_I2C_Master_Receive(hi2c1, 0x30<<1, y[1], 1, 1000);
+	HAL_I2C_Master_Transmit(hi2c1, 0x30<<1, 0x04, 1, 1000);
+	HAL_I2C_Master_Receive(hi2c1, 0x30<<1, z[0], 1, 1000);
+	HAL_I2C_Master_Transmit(hi2c1, 0x30<<1, 0x05, 1, 1000);
+	HAL_I2C_Master_Receive(hi2c1, 0x30<<1, z[1], 1, 1000);
 	mx = (double)((uint8_t)x[0]<<8|x[1]);
 	my = (double)((uint8_t)y[0]<<8|y[1]);
 	mz = (double)((uint8_t)z[0]<<8|z[1]);
-	double m[3] = {mx, my, mz};
-	return m;
+	m[0] = mx;
+	m[1] = my;
+	m[2] = mz;
+
 }
 
+/*************************************************************************************/
+/* CurrentToCoil: We use the intensity that we have calculated in the Bdot
+*/
+/* and we send it to the differents coils. We need to distinguish every coil */
+/* LV1=+x LV2=+y LV3=-y LV4=-z LV5=+z LV6=-x
+*/
+/*************************************************************************************/
+void CurrentToCoil(double intensidad[3]){
+	//We can't distinguish the differents drivers in the I2C bus
+	//We have seen in the datasheet that their addresses aren't configurable
+	//To solve this we have thought in a I2C multiplexor so we cant change in the
+	//differents drivers
+
+
+}
 
