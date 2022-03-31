@@ -20,7 +20,8 @@
 //#include "stm32f4xx_hal_i2c.h"
 //#include "stm32f4xx_hal_uart.h"
 #include <stm32f4xx_hal.h>
-
+#include "FreeRTOS.h"
+#include "utils.h"
 /*Temperature range operation of STM32L162VE*/
 #define TEMP_MIN -40
 #define TEMP_MAX 105
@@ -29,7 +30,7 @@
 #define FALSE 	0x00
 
 #define DELAY_CAMERA 2500 /*Initial operation process*/
-
+#define BATT_THRESHOLD 5 // TODO: Definir el valor
 /*Telecommands*/
 
 /*OBC*/
@@ -84,9 +85,7 @@
 //enum BatteryLevel {NOMINAL=90, LOW=85, CRITICAL=80, SURVIVAL=0}; //todo talk EPS
 
 /* USER CODE BEGIN EFP */
-enum MachineState {INIT, IDLE, COMMS, PAYLOAD, CONTINGENCY, SUNSAFE, SURVIVAL};
-uint8_t currentState;
-
+enum MachineState {INIT, CHECK, CONTINGENCY, SUNSAFE, SURVIVAL};
 
 
 /*Total of 8bytes -> 8bytes·1uit64_t/8bytes = 1 uit64_t*/
