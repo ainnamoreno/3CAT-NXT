@@ -17,6 +17,7 @@
 
 #include "definitions.h"
 #include "flash.h"
+#include <time.h>
 
 static const uint8_t GYRO_ADDR = 0x68 << 1; //gyroscope address, 0x68 or 0x69 depending on the SA0 pin
 static const uint8_t MAG_ADDR = 0x30 << 1; //magnetometer address
@@ -53,6 +54,9 @@ void check_position(void);
 
 /*Check battery level, temperatures,etc
  *If each parameter is between a specified values returns true*/
-bool system_state(I2C_HandleTypeDef *hi2c);
+int system_state(I2C_HandleTypeDef *hi2c);
+
+/*Converts the RTC in Unix Time Format */
+time_t PL_Time(RTC_TimeTypeDef *sTime, RTC_DateTypeDef *sDate);
 
 #endif /* INC_CONFIGURATION_H_ */

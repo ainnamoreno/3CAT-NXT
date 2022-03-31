@@ -240,7 +240,7 @@ void Write_Flash(uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofby
  *                                                                                    *
  * Function:  Flash_Read_Data                                                 		  *
  * --------------------                                                               *
- * Writes in the flash memory														  *
+ * Reads from the flash memory														  *
  *                                                                                    *
  *  StartSectorAddress: first address to be read		                              *
  *	RxBuf: Where the data read from memory will be stored							  *
