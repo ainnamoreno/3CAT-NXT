@@ -27,9 +27,15 @@
 #define INC_COMMS_H_
 
 
-#include <radio.h>
-#include <sx126x.h>
-#include <flash.h>
+#include "radio.h"
+#include "sx126x.h"
+#include "flash.h"
+#include "telecommands.h"
+#include "definitions.h"
+#include "FreeRTOS.h"
+#include "FreeRTOSConfig.h"
+#include "portmacro.h"
+
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -67,7 +73,7 @@
 
 
 #define RX_TIMEOUT_VALUE                 	0			//IF NEEDED
-#define BUFFER_SIZE                         38 			// Define the payload size here
+#define BUFFER_SIZE                         30			// Define the payload size here
 #define WINDOW_SIZE							40
 
 //CHECK THIS DEFINITIONS (I DO NOT KNOW IF THEY ARE CORRECT OR WHICH VALUE TO USE)
@@ -79,6 +85,9 @@
 #define CAD_TIMEOUT_MS          2000
 #define NB_TRY                  10
 
+#define CONFIG_SIZE 13
+#define UPLINK_BUFFER_SIZE 15
+#define ACK_PAYLOAD_LENGTH 5
 
 /* MAYBE IT COULD BE INTERESTING TO USE A STATE MACHINE IN COMMS*/
 /* OR MAYBE THIS SHOULD BE HANDLED IN MAIN, OR COMMS IS A SINGLE FUNCTION WITH STATES */
@@ -181,7 +190,8 @@ int8_t GetLastCadRssi( void );
  */
 void DisplayCadRssivsTime( void );
 
+void SX126xConfigureCad( RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin , uint32_t cadTimeout);
 
-
+void setContingency(bool cont);
 
 #endif /* INC_COMMS_H_ */
