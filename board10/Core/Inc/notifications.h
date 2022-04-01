@@ -2,7 +2,7 @@
  * notifications.h
  *
  *  Created on: 31 mar. 2022
- *      Author: Usuari
+ *      Author: mireia nogue
  */
 
 #ifndef INC_NOTIFICATIONS_H_
