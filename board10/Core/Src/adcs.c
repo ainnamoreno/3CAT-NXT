@@ -475,8 +475,6 @@ void nadir_algorithm(I2C_HandleTypeDef *hi2c1, float euler[3], float angle0[2]){
 	intensity[2] = (magneticDipole[2]*maxIntensity2)/maxMagneticDipole2;
 	CurrentToCoil(hi2c1, intensity);
 
-
-
 }
 
 

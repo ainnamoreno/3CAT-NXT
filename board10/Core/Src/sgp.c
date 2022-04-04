@@ -30,15 +30,7 @@ double FMod2Pi(double x){
 	return y;
 }
 
-int sign(double x){
 
-	if(x<0){
-		return -1;
-	}
-	if(x>=0){
-		return 1;
-	}
-}
 double kepler(double u, double aYNSL, double aXNSL, double tol ){
 
 	double c, s;
