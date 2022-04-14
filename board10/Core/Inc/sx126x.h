@@ -27,11 +27,11 @@
 #include "timer.h"
 #include "delay.h"
 
-//#include "uart.h"
+#include "uart.h"
 #include "stm32f4xx_hal.h"
 
 #include <math.h>
-//#include "board.h"
+#include "board.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -14,7 +14,7 @@
 #include <stdbool.h> //PARA EL BOOL
 #include <stdlib.h> //PARA GUARDAR DATOS
 //todo hacer criba de las librerias, estraer solo las funciones utiles.
-
+#include "board.h"
 
 
 /**

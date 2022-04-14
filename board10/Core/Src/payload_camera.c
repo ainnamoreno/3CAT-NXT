@@ -89,14 +89,14 @@ void setCopressibility(UART_HandleTypeDef *huart, uint8_t compressibility){
 	//TODO the compressibility should be a telecomand and must be extracted from the memory of the STM32, talk with OBC to agree where will be stored this information
 	//If the compressibility variable is stored in memory, is not needed to give it as a parameter to the function, use Read_Flash function;
 
-	setCompressibilityCmd[5] = compressibility; //The value should be obtained from memory 
+	setCompressibilityCmd[5] = compressibility; //The value should be obtained from memory
 	runCommand(huart, 0x31, setCompressibilityCmd, sizeof(setCompressibilityCmd), 5, true);
 }
 
 void setResolution(UART_HandleTypeDef *huart, uint8_t resolution){
 	//TODO the resolution should be a telecomand and must be extracted from the memory of the STM32, talk with OBC to agree where will be stored this information
 	//If the resolution variable is stored in memory, is not needed to give it as a parameter to the function, use Read_Flash function;
-	
+
 	setResolutionCmd[5] = resolution;
 	runCommand(huart, 0x31, setResolutionCmd, sizeof(setResolutionCmd), 5, true);
 }

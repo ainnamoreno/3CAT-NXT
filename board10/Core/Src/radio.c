@@ -23,13 +23,13 @@
 #include <math.h>
 #include <radio.h>
 #include <string.h>
-//#include "board.h"
+#include "board.h"
 #include <sx126x.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <inttypes.h>
 #include <timer.h>
-//#include "sx126x-board.h"
+#include "sx126x-board.h"
 
 /*!
  * \brief Initializes the radio

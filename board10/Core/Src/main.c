@@ -1,3 +1,4 @@
+
 /* USER CODE BEGIN Header */
 /**
  ******************************************************************************
@@ -95,21 +96,13 @@ int main(void) {
 	HAL_Init();
 
 	/* USER CODE BEGIN Init */
-	RTC_TimeTypeDef sTime = { 0 };
-	RTC_DateTypeDef sDate = { 0 };
-	initsensors(&hi2c1);
-	uint8_t currentState, exit_low, battery, nominal;
-	Write_Flash(CURRENT_STATE_ADDR, INIT, 1);
-	Read_Flash(CURRENT_STATE_ADDR, &currentState, sizeof(currentState));
-	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-	time_t tempssss = PL_Time(&sTime, &sDate);
 
-	pthread_t thread_comms;
-	bool payload_state; //bool which indicates when do we need to go to PAYLOAD state
-	bool comms_state; //bool which indicates if we are in region of contact with GS, then go to COMMS state
-	char time[30];
-	char date[30];
+
+//	pthread_t thread_comms;
+//	bool payload_state; //bool which indicates when do we need to go to PAYLOAD state
+//	bool comms_state; //bool which indicates if we are in region of contact with GS, then go to COMMS state
+//	char time[30];
+//	char date[30];
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
@@ -126,10 +119,59 @@ int main(void) {
 	MX_SPI1_Init();
 	MX_I2C1_Init();
 	MX_USB_OTG_FS_HCD_Init();
-	MX_IWDG_Init();
-	MX_WWDG_Init();
-	MX_RTC_Init();
+	//MX_IWDG_Init();
+	//MX_WWDG_Init();
+	//MX_RTC_Init();
 	/* USER CODE BEGIN 2 */
+	RTC_TimeTypeDef sTime = { 0 };
+		RTC_DateTypeDef sDate = { 0 };
+		initsensors(&hi2c1);
+//		stateMachine();
+//		FLASH_Unlock();
+//
+//		  /* EEPROM Init */
+//		  EE_Init();
+//
+//		/* --- Store successively many values of the three variables in the EEPROM ---*/
+//		  /* Store 0x1000 values of Variable1 in EEPROM */
+//		  for (VarValue = 1; VarValue <= 0x1000; VarValue++)
+//		  {
+//		    EE_WriteVariable(VirtAddVarTab[0], VarValue);
+//		  }
+//
+//		  /* read the last stored variables data*/
+//		  EE_ReadVariable(VirtAddVarTab[0], &VarDataTab[0]);
+//
+//
+//		  /* Store 0x2000 values of Variable2 in EEPROM */
+//		  for (VarValue = 1; VarValue <= 0x2000; VarValue++)
+//		  {
+//		    EE_WriteVariable(VirtAddVarTab[1], VarValue);
+//		  }
+//
+//		  /* read the last stored variables data*/
+//		  EE_ReadVariable(VirtAddVarTab[0], &VarDataTab[0]);
+//		  EE_ReadVariable(VirtAddVarTab[1], &VarDataTab[1]);
+//
+//
+//		  /* Store 0x3000 values of Variable3 in EEPROM */
+//		  for (VarValue = 1; VarValue <= 0x3000; VarValue++)
+//		  {
+//		    EE_WriteVariable(VirtAddVarTab[2], VarValue);
+//		  }
+
+		  /* read the last stored variables data*/
+//		  EE_ReadVariable(VirtAddVarTab[0], &VarDataTab[0]);
+//		  EE_ReadVariable(VirtAddVarTab[1], &VarDataTab[1]);
+//		  EE_ReadVariable(VirtAddVarTab[2], &VarDataTab[2]);
+		uint8_t currentState, exit_low, battery, nominal;
+		Write_Flash(CURRENT_STATE_ADDR, INIT, 1);
+		Read_Flash(CURRENT_STATE_ADDR, &currentState, sizeof(currentState));
+		HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+		HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+		//provem main telecommands
+		provatelecommands();
+		//time_t tempssss = PL_Time(&sTime,&sDate);
 
 	/* USER CODE END 2 */
 

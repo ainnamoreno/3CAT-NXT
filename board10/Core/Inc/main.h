@@ -37,7 +37,7 @@ extern "C" {
 #include "configuration.h"
 #include "sensorReadings.h"
 #include "definitions.h"
-
+#include "board.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

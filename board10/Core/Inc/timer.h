@@ -38,12 +38,12 @@ typedef struct TimerEvent_s
 typedef uint32_t TimerTime_t;
 #endif
 
-//REVISAR AQUESTA FUNCIÓ!!! (TRETA DE LA MANGA)
-enum BoardPowerSources
-{
-    USB_POWER = 0,
-    BATTERY_POWER,
-};
+////REVISAR AQUESTA FUNCIÓ!!! (TRETA DE LA MANGA)
+//enum BoardPowerSources
+//{
+//    USB_POWER = 0,
+//    BATTERY_POWER,
+//};
 
 /*!
  * \brief Initializes the timer object

@@ -2,17 +2,40 @@
  * notifications.h
  *
  *  Created on: 31 mar. 2022
- *      Author: mireia nogue
+ *      Author: Mireia Nogue
  */
 
 #ifndef INC_NOTIFICATIONS_H_
 #define INC_NOTIFICATIONS_H_
-#define GS_NOTIFICATION
-#define TAKEDATA_NOTIFICATION
-#define NO_GS_NOTIFICATION
-#define CONTINGENCY_NOTIFICATION
-#define DONEDATA_NOTIFICATION
 
+//GENERAL NOTIFICATIONS
+//To:OBC
+//Fromm: COMMs
+#define WAKEUP_NOTIFICATION //Wake up the notification
+#define SETTIME_NOTIFICATION //Indicates to OBC the time
+#define CONTINGENCY_NOTIFICATION  //Indicates to OBC to go to contingency state
+#define RESET_NOTIFICATION //Indicates to the OBC to reset the whole satellite
 
+//COMMS NOTIFICATIONS
+//To: OBC
+//From: COMMS
+#define GS_NOTIFICATION   //indicates to OBC if we pass through the contact region
+#define NO_GS_NOTIFICATION  //indicates to OBC if we not pass through the contact region
+#define EXITLOWPOWER_NOTIFICATION //Indicates to OBC to leave Comms LOWPOWER state
+
+//PAYLOAD NOTIFICATIONS
+#define TAKEPHOTO_NOTIFICATION  //Indicates to OBC to take a photo to camera
+#define DONEPHOTO_NOTIFICATION  //Photo done, camera go to sleep info to OBC
+#define TAKERF_NOTIFICATION //Indicates to the OBC the antenna info
+#define DONERF_NOTIFICATION //Indicates to the OBC antenna info done
+
+//ADCS NOTIFICATIONS
+#define NOMINAL_NOTIFICATION //Indicates to the OBC ADCS info
+#define LOW_NOTIFICATION //Indicates to the OBC ADCS info
+#define CRITICAL_NOTIFICATION //Indicates to the OBC ADCS info
+#define SETCONSTANT_NOTIFICATION //Indicates to the OBC ADCS info
+#define TLE_NOTIFICATION //Indicates to the OBC ADCS info
+#define SETGYRO_NOTIFICATION //Indicates to the OBC ADCS info
+#define SENDCALIBRATION_NOTIFICATION //Indicates to the OBC ADCS info
 
 #endif /* INC_NOTIFICATIONS_H_ */

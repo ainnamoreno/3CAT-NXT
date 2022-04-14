@@ -16,12 +16,11 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
 
 Maintainer: Miguel Luis and Gregory Cristian
 */
-//#include "board.h"
+#include "board.h"
 #include "gpio.h"
 
 #include <stdio.h>
-
-//#include "gpio-board.h"
+#include "gpio-board.h"
 
 #if defined( BOARD_IOE_EXT )
 #include "gpio-ioe.h"

@@ -22,8 +22,8 @@ Maintainer: Miguel Luis and Gregory Cristian
 #include <stdio.h>
 
 
-//#include "pinName-board.h"
-//#include "pinName-ioe.h"
+#include "pinName-board.h"
+#include "pinName-ioe.h"
 
 /*!
  * Board GPIO pin names

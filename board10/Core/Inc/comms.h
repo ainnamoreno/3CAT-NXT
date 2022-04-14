@@ -30,11 +30,12 @@
 #include "radio.h"
 #include "sx126x.h"
 #include "flash.h"
-#include "telecommands.h"
 #include "definitions.h"
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "portmacro.h"
+#include "notifications.h"
+#include "board.h"
 
 
 #include <stdbool.h>

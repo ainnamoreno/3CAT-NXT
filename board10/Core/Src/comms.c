@@ -21,6 +21,8 @@
  * \author    Daniel Herencia
  *
  * \author    Robert Molina
+ *
+ *
  */
 
 #include <comms.h>
@@ -42,8 +44,8 @@
 
 static RadioEvents_t RadioEvents;	//SHOULD THIS BE IN MAIN??? IS TO HANDLE IRQ???
 
-uint32_t air_time;
-uint8_t Buffer[BUFFER_SIZE];
+uint32_t air_time;   //LoRa air time value
+uint8_t Buffer[BUFFER_SIZE];  //Buffer to store received packets or the next packet to transmit
 
 /*
  * To avoid the variables being erased if a reset occurs, we have to store them in the Flash memory
@@ -57,41 +59,43 @@ uint8_t count_packet[] = {0};	//To count how many packets have been sent (maximu
 uint8_t count_window[] = {0};	//To count the window number
 uint8_t count_rtx[] = {0};		//To count the number of retransmitted packets
 uint8_t i = 0;					//Auxiliar variable for loop
-uint8_t j=0;
-uint8_t k=0;
+uint8_t j=0;					//variable for loops
+uint8_t k=0;					//variable for loops
 
-uint64_t ack;					//Information rx in the ACK (FER DESPLAÇAMENTS DSBM)
+uint64_t ack;					//Information rx in the ACK (0=> ack, 1=> nack)
 uint8_t nack_number;			//Number of the current packet to retransmit
-bool nack;						//True when retransmition necessary
+bool nack;						//True when retransmission necessary
 bool full_window;				//Stop & wait => to know when we reach the limit packet of the window
-bool statemach = true; //If true, comms workflow follows the statemachine. This value should be controlled by OBC
-							//Put true before activating the statemachine thread. Put false before ending comms thread
-bool send_data = false; //If true, the state machine send packets every airtime
-bool send_telemetry = false; //If true, we have to send telemetry packets instead of payload data
-uint8_t num_telemetry = 0; //Total of telemetry packets that have to be sent (computed when telecomand send Telemetry received)
-bool contingency = false; //True if we are in contingency state => only receive
-uint8_t uno=1; //TRUE 0x01
+bool statemach = true; 			//If true, comms workflow follows the statemachine. This value should be controlled by OBC
+								//Put true before activating the statemachine thread. Put false before ending comms thread
+bool send_data = false; 		//If true, the state machine send packets every airtime
+bool send_telemetry = false; 	//If true, we have to send telemetry packets instead of payload data
+uint8_t num_telemetry = 0; 		//Total of telemetry packets that have to be sent (computed when telecomand send Telemetry received)
+bool contingency = false; 		//True if we are in contingency state => only receive
+uint8_t uno=1; 					//TRUE 0x01
 //uint8_t false=0;
 uint8_t SF=7;
 //uint8_t Buffer[BUFFER_SIZE];
 //bool PacketReceived = false;
 //bool RxTimeoutTimerIrqFlag = false;
-
+//uint8_t resolution=0;
+//uint8_t compression=0;
 
 /*
- * STATE MACHINE VARIABLES
+ * STATE MACHINE VARIABLES AND DEFINITIONS
  */
 typedef enum
 {
-    LOWPOWER,      // low power consumption operating mode when we end always the transceiver is not transmitting nor processing received packets.
-    RX,      // CAD (channel activity detected) interruption occurs, call configuration()-->stateMachine(), START_CAD
-    RX_TIMEOUT, //transmitting process, trying to receive a packet a timer is activated so as to avoid getting suck in a bug or other receiving error.
-    RX_ERROR, //when an error in the receiving process occurs, we ruturn to START_CAD state.
-    TX,  //transmit data and telemetry to the ground station (tx_function() --> LOWPOWER), TxDone IRQ, when the sate is changed from the process_telecomand().
-    TX_TIMEOUT, //Tx Timmer produces a timeout exception. Happen when the transmission gets stuck or any error during the transmission occurs -->LOWPOWER
-    START_CAD, // enter in START_CAD state from any of the other reception states
+    LOWPOWER,      	// low power consumption operating mode when we end always the transceiver is not transmitting nor processing received packets.
+    RX,      		// CAD (channel activity detected) interruption occurs, call configuration()-->stateMachine(), START_CAD
+    RX_TIMEOUT, 	//transmitting process, trying to receive a packet a timer is activated so as to avoid getting suck in a bug or other receiving error.
+    RX_ERROR, 		//when an error in the receiving process occurs, we ruturn to START_CAD state.
+    TX,  			//transmit data and telemetry to the ground station (tx_function() --> LOWPOWER), TxDone IRQ, when the sate is changed from the process_telecomand().
+    TX_TIMEOUT, 	//Tx Timmer produces a timeout exception. Happen when the transmission gets stuck or any error during the transmission occurs -->LOWPOWER
+    START_CAD, 		// enter in START_CAD state from any of the other reception states
 }States_t;
 
+//Possible CAD events
 typedef enum
 {
     CAD_FAIL,
@@ -102,25 +106,37 @@ typedef enum
 States_t State = LOWPOWER;   //Variable to store the current state
 
 int8_t RssiValue = 0;		//RSSI computed value
-int8_t SnrValue = 0;		//SnrValue computed value
+int8_t SnrValue = 0;		//SNR computed value
 
-CadRx_t CadRx = CAD_FAIL; 		//Current CAD state
+CadRx_t CadRx = CAD_FAIL; 			//Current CAD state
 bool PacketReceived = false;		//To know if a packet have been received or not
-bool RxTimeoutTimerIrqFlag = false;	////Flag to know if there has been any interruption
+bool RxTimeoutTimerIrqFlag = false;	//Flag to know if there has been any interruption
 
-int16_t RssiMoy = 0;			//RSSI stored value
-int8_t SnrMoy = 0;			//SnrMoy stored value
-uint16_t RxCorrectCnt = 0;  ////Counter of correct received packets
-uint16_t BufferSize = BUFFER_SIZE; ////Buffer size
+int16_t RssiMoy = 0;				//RSSI stored value
+int8_t SnrMoy = 0;					//SNR stored value
+uint16_t RxCorrectCnt = 0;  		//Counter of correct received packets
+uint16_t BufferSize = BUFFER_SIZE; 	//Buffer size
 
 //TIMERS
-TimerEvent_t CADTimeoutTimer;
-TimerEvent_t RxAppTimeoutTimer;
+TimerEvent_t CADTimeoutTimer;		//CAD Timer
+TimerEvent_t RxAppTimeoutTimer;		//Reception Timer
 
-/*
- *  ---------------- END ----------------
- */
-
+//provar els telecommands
+void provatelecommands (void){
+	uint8_t prova =0;
+	uint8_t info=0;
+	for(prova=0; prova<18 ; prova++){
+		process_telecommand(prova, info);
+	}
+}
+/*********************************************************************************
+* Function: configuration														 *
+* -----------------------                                                        *
+* function to configure the transceiver and the transmission protocol parameters *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 void configuration(void){
 
 	Radio.Init( &RadioEvents );
@@ -154,21 +170,24 @@ void configuration(void){
 	//Read from Flash count_window
 	Flash_Read_Data( COUNT_RTX_ADDR, count_rtx , sizeof(count_rtx) );
 	//Read from Flash count_rtx
-	ack = 0xFFFFFFFFFFFFFFFF; //Initially confifured 111..111
+	ack = 0xFFFFFFFFFFFFFFFF; //Initially configured 111..111
 	nack = false;
 	State = RX;
 
-
 };
-
-//CAD: CHANNEL ACTIVITY DETECTED
-
+/*********************************************************************************
+* Function: tx_function														     *
+* -----------------------                                                        *
+* function to transmit the next packet                                           *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 void tx_function(void){  //this function verify if there are packets left to be sent in this transmitting windows, and the calls the packaging function. It also updates the variables in the flash memory.
 	//configuration();
 	if (!full_window)
 	{
 		packaging(); //Start the TX by packaging all the data that will be transmitted
-		//SX126xSetPayload(); //Aquesta fa el writebuffer, sha de posar direccions com a la pag 48 del datasheet
 		Radio.Send( Buffer, BUFFER_SIZE );
 		Flash_Write_Data( COUNT_PACKET_ADDR , count_packet , sizeof(count_packet) ); //Read from Flash count_packet
 		Flash_Write_Data( COUNT_WINDOW_ADDR , count_window , sizeof(count_window) ); //Read from Flash count_window
@@ -176,17 +195,30 @@ void tx_function(void){  //this function verify if there are packets left to be 
 	}
 };
 
+/*********************************************************************************
+* Function: rx_function														     *
+* -----------------------                                                        *
+* function to receive a packet detected                                          *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 
-/* I THINK THAT THIS FUNCTION IS NOT NEEDED*/
-void rx_function(void){     //receives the packet detected
+void rx_function(void){
 	Radio.Rx( RX_TIMEOUT_VALUE );
 
 };
-
+/*********************************************************************************
+* Function: packaging														     *
+* -----------------------                                                        *
+* function to store in Buffer the next packet to send (taking into account that  *
+* it could be data coming from the payload, telemetry or a retransmission of a   *
+* packet from last windows                                                       *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 void packaging(void){
-	//NACK packets at the beginnig of the next window
-
-	if (nack)
+	if (nack) //NACK packets at the beginnig of the next window
 	{
 		while(i<sizeof(ack))
 		{
@@ -197,6 +229,8 @@ void packaging(void){
 				//Packet from last window => count_window - 1
 				Flash_Read_Data( PHOTO_ADDR + (count_window[0]-1)*WINDOW_SIZE*BUFFER_SIZE + (nack_number)*BUFFER_SIZE , Buffer , sizeof(Buffer) );	//Direction in HEX
 				count_rtx[0]++;
+				i++;
+				break; //Exits the while when the we find a packet to rtx
 			}
 			i++;
 		}
@@ -230,16 +264,38 @@ void packaging(void){
 		}
 	}
 };
+/*********************************************************************************
+* Function: resetCommsParams												     *
+* -----------------------                                                        *
+* this function is called when a new photo is stored in the last photo position, *
+* and we have to send the new photo (the old one is not necessary, otherwise we  *
+* would have not received a send photo telecommand)                              *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 
-
-/*This function is called when a new photo is stored in the last photo position*/
 void resetCommsParams(void){
 	count_packet[0] = 0;
 	count_window[0] = 0;
 	count_rtx[0] 	= 0;
 }
 
-
+/*********************************************************************************
+* Function: stateMachine														 *
+* -----------------------                                                        *
+* communication process state machine                                            *
+* States:                                                                        *
+* -RX_TIMEOUT: when the reception ends                                           *
+* -RX_ERROR: when an error in the reception process occurs                       *
+* -RX: when a packet has been received                                           *
+* -TX: to transmit a packet                                                      *
+* -TX_TIMEOUT: when the transmission ends                                        *
+* -START_CAD: to detect channel activity (necessary to receive packets correctly)*
+* -LOWPOWE: when the transceiver is not transmitting nor receiving               *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 void stateMachine(void){
     uint16_t PacketCnt = 0;
 
@@ -258,12 +314,23 @@ void stateMachine(void){
     TimerInit( &RxAppTimeoutTimer, RxTimeoutTimerIrq );
     TimerSetValue( &RxAppTimeoutTimer, RX_TIMER_TIMEOUT );
 
+    //todo:
+    //if(xTaskNotifyWait(0x00, ULONG_MAX, &NotifiedValue, portMAX_DELAY) == pdTRUE){
+    // 		while(NotifiedValue==WAKE_NOTIFICATION){
+    //
+
     configuration();
 
     SX126xConfigureCad( CAD_SYMBOL_NUM, CAD_DET_PEAK,CAD_DET_MIN, CAD_TIMEOUT_MS);      // Configure the CAD
     Radio.StartCad( );                                                                  // do the config and lunch first CAD
 
-    State=RX;
+    if(contingency==true){
+    	State=TX;  //if we get contingency, we start with TX
+    }
+    else{
+    	State=RX;
+    }
+    while(statemach){
     switch(State)
     {
         case RX_TIMEOUT:
@@ -317,7 +384,6 @@ void stateMachine(void){
             }
             break;
         }
-// mirar que passa si no arriba el packet(ACK)
 
         case TX:
         {
@@ -332,9 +398,11 @@ void stateMachine(void){
             }
             //Send Frame
             DelayMs( 1 );
-            if (send_data){
+            if (send_data || send_telemetry){
             	tx_function();
             }
+            send_data=false;
+            send_telemetry=false;
             State = LOWPOWER;
             break;
         }
@@ -365,28 +433,46 @@ void stateMachine(void){
         break;
         }
         case LOWPOWER:
-        default:
+        	//wait GS_NOTIFICATION
+        	//xTaskNotify("Task OBC", GS_NOTIFICATION, eSetBits);
+        	State = RX;
+        	//IS IT NECESSARY THIS STATE?
+        //default:
         	//this is a low power consumption operating mode where we end always the transceiver is not transmitting nor processing received packets, and no IRQ are needed to be handled.
         	//Then, the only way to exit this mode is changing the state manually from another function, or that an interruption request jumps from the transceiver.
 
             break;
     }
+   }
 }
 
-
-
-
-/*
- * FUNCTIONS OBTAINED FROM EXAMPLE MAIN.C
- */
-
-
+/*********************************************************************************
+* Function: OnTxDone														     *
+* -----------------------                                                        *
+* when the transmission finish correctly                                         *
+*                                                                                *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 void OnTxDone( void )
 {
     Radio.Standby( );
     State = TX;
 }
 
+/*********************************************************************************
+* Function: OnRxDone														     *
+* -----------------------                                                        *
+* process the information when the reception has been correctly                  *
+* calculates the rssi and snr                                                    *
+* payload: information received                                                  *
+* size: size of the payload                                                      *
+* rssi: rssi value                                                               *
+* snr: snr value                                                                 *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
 {
     Radio.Standby( );
@@ -399,13 +485,30 @@ void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
     SnrMoy = (((SnrMoy * RxCorrectCnt) + SnrValue) / (RxCorrectCnt + 1));
     State = RX;
 }
-
+/*********************************************************************************
+* Function: OnTxTimeout														     *
+* -----------------------                                                        *
+* function to transmission timeout                                               *
+*                                                                                *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 void OnTxTimeout( void )
 {
     Radio.Standby( );
     State = TX_TIMEOUT;
 }
 
+/*********************************************************************************
+* Function: OnRxTimeout														     *
+* -----------------------                                                        *
+* function to process reception timeout                                          *
+*                                                                                *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 void OnRxTimeout( void )
 {
     Radio.Standby( );
@@ -424,11 +527,30 @@ void OnRxTimeout( void )
     }
 }
 
+/*********************************************************************************
+* Function: OnRxError														     *
+* -----------------------                                                        *
+* function called when a reception error occurs                                  *
+*                                                                                *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
+
 void OnRxError( void )
 {
     Radio.Standby( );
     State = RX_ERROR;
 }
+/*********************************************************************************
+* Function: OnCadDone														     *
+* -----------------------                                                        *
+* function to check if the CAD has been done correctly or not                    *
+*                                                                                *
+* channelActivityDetected: boolean that contains the CAD flat                    *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 
 void OnCadDone( bool channelActivityDetected)
 {
@@ -444,6 +566,15 @@ void OnCadDone( bool channelActivityDetected)
     }
     State = RX;
 }
+/*********************************************************************************
+* Function: CADTimeoutTimeoutIrq							                     *
+* -----------------------                                                        *
+* function called automatically when a channel activity detected (Cad) Irq occurs*
+*                                                                                *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 
 static void CADTimeoutTimeoutIrq( void )
 {
@@ -451,10 +582,29 @@ static void CADTimeoutTimeoutIrq( void )
     State = START_CAD;
 }
 
+/*********************************************************************************
+* Function: RxTimeoutTimerIrq												     *
+* -----------------------                                                        *
+* function called automatically when a Timeout interrupton (Irq) occurs          *
+*                                                                                *
+*                                                                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
+
 static void RxTimeoutTimerIrq( void )
 {
     RxTimeoutTimerIrqFlag = true;
 }
+/*********************************************************************************
+* Function: setContingency														 *
+* -----------------------                                                        *
+* sets the value of contingency true or false                                    *
+*                                                                                *
+*  cont: value to set contingency (true or false)                                *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
 
 void setContingency(bool cont){
 	contingency=cont;
@@ -463,12 +613,17 @@ void sendTelemetry(){
 	if(!contingency){
 		send_telemetry=false;
 		num_telemetry=(uint8_t) 34+BUFFER_SIZE + 1; //cast to integer to erase the decimal part
-		State = TX;
+
 	}
+	else{
+		send_telemetry=true;
+
+	}
+	State = TX;
 	Write_Flash(TELEMETRY_ADDR, &uno , 1);
 }
 void sendData() {
-	if (!contingency){ //com entrar estat contingency
+	if (!contingency){
 	State = TX;
 	send_data = true;
 	}
@@ -508,10 +663,19 @@ void ackData(){
 int n=0;
 void setTime(){
 	uint8_t time[4];  //4bytes
+
 			for(n=0; n<4; n++){
 				time[n]=Buffer[n+1];
 			}
 			Write_Flash(TEMP_ADDR, time, sizeof(time));
+			//xTaskNotify("Task OBC", SETTIME_NOTIFICATION, eSetBits);
+			//if(xTaskNotifyWait(0x00, ULONG_MAX, &NotifiedValue, portMAXVALUE) == pdTRUE){
+			//		esperar x l'OBC (TIMERTC_NOTI)
+						// llegir l'adreça TIMERTC_ADDR
+						// enviar el que hi ha a l'adreça a la GS
+
+			//}
+
 }
 void tle(){
 	/*Aquí si es reben els TLEs en diferents paquets doncs s'han d'anar
@@ -523,45 +687,73 @@ void tle(){
 			tle[k-1]=Buffer[k];
 			}
 			Write_Flash(TLE_ADDR + tle_packets*UPLINK_BUFFER_SIZE, tle, sizeof(tle));
-			tle_packets++;
+				tle_packets++;
 			uint8_t integer_part = (uint8_t) 138/UPLINK_BUFFER_SIZE;
 			if (tle_packets == integer_part+1){
-			tle_packets = 0;
+				tle_packets = 0;
 			}
 
 }
+/*********************************************************************************
+* Function: process_telecommand												     *
+* -----------------------                                                        *
+* process the information contained in the packet depending on the telecommand   *
+* received                                                                       *
+*  header: number of telecommand                                                 *
+*  info: information contained in the received packet                            *
+*  returns: nothing                                                              *
+*                                                                                *
+**********************************************************************************/
+
 void process_telecommand(uint8_t header, uint8_t info) {
 	switch(header) {
 	case RESET2:
 		/*Segons el drive s'ha de fer el reset si val 1 el bit, així que potser
 		 * s'hauria de posar un if*/
+		//if()
 		HAL_NVIC_SystemReset();
+		//no hi ha perill ja que s'assegura  all outstanding memory accesses included
+        //buffered write are completed before reset
+		//xTaskNotify("Task OBC",RESET_NOTIFICATION, eSetBits); //nomes la noti a OBC
+		//comprovar rtc no s'esborra, ni els tle, ni els registre del sistema
 		break;
 	case NOMINAL:
-		Write_Flash(NOMINAL_ADDR, &info, 1);
+		Write_Flash(NOMINAL_ADDR, &info, 1); //escric a la flash el valor del threshold nominal de la bateria
+		//xTaskNotify("Task OBC", NOMINAL_NOTIFICATION, eSetBits); //noti indicant valor nominal canviat
 		break;
 	case LOW:
 		Write_Flash(LOW_ADDR, &info, 1);
+		//xTaskNotify("Task OBC", LOW_NOTIFICATION, eSetBits); //escric a la flash el valor del threshold low de la bateria
 		break;
 	case CRITICAL:
 		Write_Flash(CRITICAL_ADDR, &info, 1);
+		//xTaskNotify("Task OBC", CRITICAL_NOTIFICATION, eSetBits); //escric a la flash el valor del threshold critical de la bateria
 		break;
 	case EXIT_LOW_POWER:
-		Write_Flash(EXIT_LOW_POWER_FLAG_ADDR, &info, 1);
+		//Write_Flash(EXIT_LOW_POWER_FLAG_ADDR, &info, 1);
 		Write_Flash(EXIT_LOW_ADDR, &uno, 1);
+		//xTaskNotify("Task OBC", EXITLOWPOWER_NOTIFICATION, eSetBits); //nomes noti cap a OBC, indicant surt del LOWPOWER
 		break;
 	case SET_TIME:
 		setTime();
+		//Write_Flash(TIMERTC_ADDR, &info, 1);
+		//TODO: notificació a OBC, set time
+		//ES LLEGEIX UNIX TIME, UNIX FORMAT
 		break;
 	case SET_CONSTANT_KP:
 		Write_Flash(KP_ADDR, &info, 1);
+		//xTaskNotify("Task OBC", SETCONSTANT_NOTIFICATION, eSetBits);
+		//KP: cte proporcional del controlador adcs
 		break;
 	case TLE:
 		tle();
+		//xTaskNotify("Task OBC", TLE_NOTIFICATION, eSetBits);
+
 		break;
 	case SET_GYRO_RES:
-		/*4 possibles estats,rebrem 00/01/10/11*/
+		/*4 possibles estats,rebrem 00/01/10/11, en forma de bits*/
 		Write_Flash(GYRO_RES_ADDR, &info, 1);
+		//xTaskNotify("Task OBC", SETGYRO_NOTIFICATION, eSetBits);
 		break;
 	case SENDDATA:
 		sendData();
@@ -578,6 +770,7 @@ void process_telecommand(uint8_t header, uint8_t info) {
 		break;
 	case SET_SF:  //semicolon added in order to be able to declare SF here
 						//	/*4 cases (4/5, 4/6, 4/7,1/2), so we will receive and store 0, 1, 2 or 3*/
+
 		if (info == 0) SF = 7;
 		else if (info == 1) SF = 8;
 		else if (info == 2) SF = 9;
@@ -589,12 +782,15 @@ void process_telecommand(uint8_t header, uint8_t info) {
 		break;
 	case SEND_CALIBRATION:
 		sendcalibration();
+		//xTaskNotify("Task OBC", SENDCALIBRATION_NOTIFICATION, eSetBits);
 		break;
 	case TAKEPHOTO:
 		Write_Flash(PAYLOAD_STATE_ADDR, &uno, 1);
 		Write_Flash(PL_TIME_ADDR, &info, 8);
 		Write_Flash(PHOTO_RESOL_ADDR, &Buffer[5], 1);
 		Write_Flash(PHOTO_COMPRESSION_ADDR, &Buffer[6], 1);
+		//configuració camera, la info la treu de la flash no?
+		//xTaskNotify("Task OBC", TAKEPHOTO_NOTIFICATION, eSetBits);
 		break;
 	case TAKERF:
 		Write_Flash(PAYLOAD_STATE_ADDR, &uno, 1);
@@ -604,6 +800,8 @@ void process_telecommand(uint8_t header, uint8_t info) {
 		Write_Flash(F_MAX_ADDR, &Buffer[10], 1);
 		Write_Flash(DELTA_F_ADDR, &Buffer[11], 1);
 		Write_Flash(INTEGRATION_TIME_ADDR, &Buffer[12], 1);
+		//xTaskNotify("Task OBC", TAKERF_NOTIFICATION, eSetBits);
+		//POSSIBILITAT D'INCLOURE, LUT amb llistat de freq
 		break;
 	case SEND_CONFIG: ; //semicolon added in order to be able to declare SF here
 		uint8_t config[CONFIG_SIZE];
@@ -611,5 +809,5 @@ void process_telecommand(uint8_t header, uint8_t info) {
 		Radio.Send(config, CONFIG_SIZE);
 		break;
 	}
-	//ha arribat telecomand (a obc), adressa o flag
+
 }

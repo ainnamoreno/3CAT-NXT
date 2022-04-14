@@ -2,7 +2,7 @@
  * FreeRTOSConfig.h
  *
  *  Created on: 28 mar. 2022
- *      Author: Usuari
+ *      Author: Predeterminated
  */
 
 #ifndef INC_FREERTOSCONFIG_H_
