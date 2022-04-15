@@ -40,7 +40,11 @@
 /** @defgroup FLASH_Exported_Types FLASH Exported Types
   * @{
   */
- 
+ /* Exported types ------------------------------------------------------------*/
+ /**
+   * @brief FLASH Status
+   */
+
 /**
   * @brief  FLASH Procedure structure definition
   */
@@ -97,7 +101,7 @@ typedef struct
 /**
   * @}
   */
-  
+
 /** @defgroup FLASH_Type_Program FLASH Type Program
   * @{
   */ 

@@ -550,27 +550,27 @@ uint32_t HAL_FLASH_GetError(void)
   * @retval HAL Status
   */
 HAL_StatusTypeDef FLASH_WaitForLastOperation(uint32_t Timeout)
-{ 
+{
   uint32_t tickstart = 0U;
-  
+
   /* Clear Error Code */
   pFlash.ErrorCode = HAL_FLASH_ERROR_NONE;
-  
+
   /* Wait for the FLASH operation to complete by polling on BUSY flag to be reset.
      Even if the FLASH operation fails, the BUSY flag will be reset and an error
      flag will be set */
   /* Get tick */
   tickstart = HAL_GetTick();
 
-  while(__HAL_FLASH_GET_FLAG(FLASH_FLAG_BSY) != RESET) 
-  { 
+  while(__HAL_FLASH_GET_FLAG(FLASH_FLAG_BSY) != RESET)
+  {
     if(Timeout != HAL_MAX_DELAY)
     {
       if((Timeout == 0U)||((HAL_GetTick() - tickstart ) > Timeout))
       {
         return HAL_TIMEOUT;
       }
-    } 
+    }
   }
 
   /* Check FLASH End of Operation flag  */
@@ -579,7 +579,7 @@ HAL_StatusTypeDef FLASH_WaitForLastOperation(uint32_t Timeout)
     /* Clear FLASH End of Operation pending bit */
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP);
   }
-#if defined(FLASH_SR_RDERR)  
+#if defined(FLASH_SR_RDERR)
   if(__HAL_FLASH_GET_FLAG((FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | \
                            FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR | FLASH_FLAG_RDERR)) != RESET)
 #else
@@ -594,8 +594,8 @@ HAL_StatusTypeDef FLASH_WaitForLastOperation(uint32_t Timeout)
 
   /* If there is no error flag set */
   return HAL_OK;
-  
-}  
+
+}
 
 /**
   * @brief  Program a double word (64-bit) at a specified address.

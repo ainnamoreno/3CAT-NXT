@@ -8,6 +8,9 @@
 #ifndef INC_TASK_ADCS_H_
 #define INC_TASK_ADCS_H_
 
+#include "definitions.h"
+#include "configuration.h"
+#include "adcs.h"
 
 void vADCSTask(void *pvParameters);
 

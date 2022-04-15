@@ -11,7 +11,6 @@
  * \author    David Reiss
  */
 
-
 #include "flash.h"
 #include "stm32f4xx_hal.h"
 #include "string.h"
@@ -33,107 +32,135 @@
  *                                                                                    *
  **************************************************************************************/
 
-static uint32_t GetSector(uint32_t Address)
-{
-  uint32_t sector = 0;
+static uint32_t GetSector(uint32_t Address) {
+	uint32_t sector = 0;
 
-  if((Address < 0x08003FFF) && (Address >= 0x08000000))
-  {
-    sector = FLASH_SECTOR_0;
-  }
-  else if((Address < 0x08007FFF) && (Address >= 0x08004000))
-  {
-    sector = FLASH_SECTOR_1;
-  }
-  else if((Address < 0x0800BFFF) && (Address >= 0x08008000))
-  {
-    sector = FLASH_SECTOR_2;
-  }
-  else if((Address < 0x0800FFFF) && (Address >= 0x0800C000))
-  {
-    sector = FLASH_SECTOR_3;
-  }
-  else if((Address < 0x0801FFFF) && (Address >= 0x08010000))
-  {
-    sector = FLASH_SECTOR_4;
-  }
-  else if((Address < 0x0803FFFF) && (Address >= 0x08020000))
-  {
-    sector = FLASH_SECTOR_5;
-  }
-  else if((Address < 0x0805FFFF) && (Address >= 0x08040000))
-  {
-    sector = FLASH_SECTOR_6;
-  }
-  else if((Address < 0x0807FFFF) && (Address >= 0x08060000))
-  {
-    sector = FLASH_SECTOR_7;
-  }
-/*  else if((Address < 0x0809FFFF) && (Address >= 0x08080000))
-  {
-    sector = FLASH_SECTOR_8;
-  }
-  else if((Address < 0x080BFFFF) && (Address >= 0x080A0000))
-  {
-    sector = FLASH_SECTOR_9;
-  }
-  else if((Address < 0x080DFFFF) && (Address >= 0x080C0000))
-  {
-    sector = FLASH_SECTOR_10;
-  }
-  else if((Address < 0x080FFFFF) && (Address >= 0x080E0000))
-  {
-    sector = FLASH_SECTOR_11;
-  }
-  else if((Address < 0x08103FFF) && (Address >= 0x08100000))
-  {
-    sector = FLASH_SECTOR_12;
-  }
-  else if((Address < 0x08107FFF) && (Address >= 0x08104000))
-  {
-    sector = FLASH_SECTOR_13;
-  }
-  else if((Address < 0x0810BFFF) && (Address >= 0x08108000))
-  {
-    sector = FLASH_SECTOR_14;
-  }
-  else if((Address < 0x0810FFFF) && (Address >= 0x0810C000))
-  {
-    sector = FLASH_SECTOR_15;
-  }
-  else if((Address < 0x0811FFFF) && (Address >= 0x08110000))
-  {
-    sector = FLASH_SECTOR_16;
-  }
-  else if((Address < 0x0813FFFF) && (Address >= 0x08120000))
-  {
-    sector = FLASH_SECTOR_17;
-  }
-  else if((Address < 0x0815FFFF) && (Address >= 0x08140000))
-  {
-    sector = FLASH_SECTOR_18;
-  }
-  else if((Address < 0x0817FFFF) && (Address >= 0x08160000))
-  {
-    sector = FLASH_SECTOR_19;
-  }
-  else if((Address < 0x0819FFFF) && (Address >= 0x08180000))
-  {
-    sector = FLASH_SECTOR_20;
-  }
-  else if((Address < 0x081BFFFF) && (Address >= 0x081A0000))
-  {
-    sector = FLASH_SECTOR_21;
-  }
-  else if((Address < 0x081DFFFF) && (Address >= 0x081C0000))
-  {
-    sector = FLASH_SECTOR_22;
-  }
-  else if (Address < 0x081FFFFF) && (Address >= 0x081E0000)
-  {
-    sector = FLASH_SECTOR_23;
-  }*/
-  return sector;
+	if ((Address < 0x08003FFF) && (Address >= 0x08000000)) {
+		sector = FLASH_SECTOR_0;
+	} else if ((Address < 0x08007FFF) && (Address >= 0x08004000)) {
+		sector = FLASH_SECTOR_1;
+	} else if ((Address < 0x0800BFFF) && (Address >= 0x08008000)) {
+		sector = FLASH_SECTOR_2;
+	} else if ((Address < 0x0800FFFF) && (Address >= 0x0800C000)) {
+		sector = FLASH_SECTOR_3;
+	} else if ((Address < 0x0801FFFF) && (Address >= 0x08010000)) {
+		sector = FLASH_SECTOR_4;
+	} else if ((Address < 0x0803FFFF) && (Address >= 0x08020000)) {
+		sector = FLASH_SECTOR_5;
+	} else if ((Address < 0x0805FFFF) && (Address >= 0x08040000)) {
+		sector = FLASH_SECTOR_6;
+	} else if ((Address < 0x0807FFFF) && (Address >= 0x08060000)) {
+		sector = FLASH_SECTOR_7;
+	}
+	/*  else if((Address < 0x0809FFFF) && (Address >= 0x08080000))
+	 {
+	 sector = FLASH_SECTOR_8;
+	 }
+	 else if((Address < 0x080BFFFF) && (Address >= 0x080A0000))
+	 {
+	 sector = FLASH_SECTOR_9;
+	 }
+	 else if((Address < 0x080DFFFF) && (Address >= 0x080C0000))
+	 {
+	 sector = FLASH_SECTOR_10;
+	 }
+	 else if((Address < 0x080FFFFF) && (Address >= 0x080E0000))
+	 {
+	 sector = FLASH_SECTOR_11;
+	 }
+	 else if((Address < 0x08103FFF) && (Address >= 0x08100000))
+	 {
+	 sector = FLASH_SECTOR_12;
+	 }
+	 else if((Address < 0x08107FFF) && (Address >= 0x08104000))
+	 {
+	 sector = FLASH_SECTOR_13;
+	 }
+	 else if((Address < 0x0810BFFF) && (Address >= 0x08108000))
+	 {
+	 sector = FLASH_SECTOR_14;
+	 }
+	 else if((Address < 0x0810FFFF) && (Address >= 0x0810C000))
+	 {
+	 sector = FLASH_SECTOR_15;
+	 }
+	 else if((Address < 0x0811FFFF) && (Address >= 0x08110000))
+	 {
+	 sector = FLASH_SECTOR_16;
+	 }
+	 else if((Address < 0x0813FFFF) && (Address >= 0x08120000))
+	 {
+	 sector = FLASH_SECTOR_17;
+	 }
+	 else if((Address < 0x0815FFFF) && (Address >= 0x08140000))
+	 {
+	 sector = FLASH_SECTOR_18;
+	 }
+	 else if((Address < 0x0817FFFF) && (Address >= 0x08160000))
+	 {
+	 sector = FLASH_SECTOR_19;
+	 }
+	 else if((Address < 0x0819FFFF) && (Address >= 0x08180000))
+	 {
+	 sector = FLASH_SECTOR_20;
+	 }
+	 else if((Address < 0x081BFFFF) && (Address >= 0x081A0000))
+	 {
+	 sector = FLASH_SECTOR_21;
+	 }
+	 else if((Address < 0x081DFFFF) && (Address >= 0x081C0000))
+	 {
+	 sector = FLASH_SECTOR_22;
+	 }
+	 else if (Address < 0x081FFFFF) && (Address >= 0x081E0000)
+	 {
+	 sector = FLASH_SECTOR_23;
+	 }*/
+	return sector;
+}
+
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  FirstAddress                                                     		  *
+ * --------------------                                                               *
+ * defines the first address of a sector according to the reference manual	          *											  *
+ *                                                                                    *
+ *  sector: Specific sector of a read/write function                                  *
+ *                                                                                    *
+ *  returns: The first address corresponding to the sector	                          *
+ *                                                                                    *
+ **************************************************************************************/
+
+static uint32_t GetFirstAddress(uint32_t sector) {
+	uint32_t addr = 0;
+	switch (sector) {
+	case (FLASH_SECTOR_0):
+		addr = SECTOR0_ADDR;
+		break;
+	case (FLASH_SECTOR_1):
+		addr = SECTOR1_ADDR;
+		break;
+	case (FLASH_SECTOR_2):
+		addr = SECTOR2_ADDR;
+		break;
+	case (FLASH_SECTOR_3):
+		addr = SECTOR3_ADDR;
+		break;
+	case (FLASH_SECTOR_4):
+		addr = SECTOR4_ADDR;
+		break;
+	case (FLASH_SECTOR_5):
+		addr = SECTOR5_ADDR;
+		break;
+	case (FLASH_SECTOR_6):
+		addr = SECTOR6_ADDR;
+		break;
+	case (FLASH_SECTOR_7):
+		addr = SECTOR7_ADDR;
+		break;
+
+	}
+	return addr;
 }
 
 /**************************************************************************************
@@ -149,65 +176,94 @@ static uint32_t GetSector(uint32_t Address)
  *  returns: Nothing or error in case it fails			                              *
  *                                                                                    *
  **************************************************************************************/
-uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofbytes)
-{
+uint32_t Flash_Write_Data(uint32_t StartSectorAddress, uint8_t *Data,
+		uint16_t numberofbytes) {
 
 	static FLASH_EraseInitTypeDef EraseInitStruct;
 	uint32_t SECTORError;
-	int sofar=0;
+	int sofar = 0;
 
 	//int numberofwords = (strlen(Data)/4) + ((strlen(Data)%4) != 0);
 
+	/* Unlock the Flash to enable the flash control register access *************/
+	HAL_FLASH_Unlock();
 
-	 /* Unlock the Flash to enable the flash control register access *************/
-	  HAL_FLASH_Unlock();
+	/* Erase the user Flash area */
 
-	  /* Erase the user Flash area */
+	/* Get the number of sector to erase from 1st sector */
 
-	  /* Get the number of sector to erase from 1st sector */
+	uint32_t StartSector = GetSector(StartSectorAddress);
+	uint32_t EndSectorAddress = StartSectorAddress + numberofbytes;
+	uint32_t EndSector = GetSector(EndSectorAddress);
 
-	  uint32_t StartSector = GetSector(StartSectorAddress);
-	  uint32_t EndSectorAddress = StartSectorAddress + numberofbytes;
-	  uint32_t EndSector = GetSector(EndSectorAddress);
+	uint32_t FirstAddr = GetFirstAddress(StartSector);
+	uint32_t Addr = FirstAddr;
+	uint32_t LastAddr = GetFirstAddress(StartSector+1);
+	uint8_t DataSave[PAGE_SIZE] = {0};
+	uint8_t i = 0,j=0;
+	while(Addr < LastAddr){
+		/* Verify if Addr is the Address where we want to write */
+		if (Addr == StartSectorAddress){
+			// We add the data array to DataSave
+			while(j<numberofbytes){
+				DataSave[i] = Data[j];
+				i++;
+				j++;
+				Addr++;
+			}
+		}else{
+			DataSave[i] = *(__IO uint8_t*)Addr;
+			i++;
+			Addr = Addr+1;
+		}
+	}
 
-	  /* Fill EraseInit structure*/
-	  EraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
-	  EraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
-	  EraseInitStruct.Sector        = StartSector;
-	  EraseInitStruct.NbSectors     = (EndSector - StartSector) + 1;
 
-	  /* Note: If an erase operation in Flash memory also concerns data in the data or instruction cache,
-	     you have to make sure that these data are rewritten before they are accessed during code
-	     execution. If this cannot be done safely, it is recommended to flush the caches by setting the
-	     DCRST and ICRST bits in the FLASH_CR register. */
-	  if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK)
-	  {
-		  return HAL_FLASH_GetError ();
+	/* Fill EraseInit structure*/
+	EraseInitStruct.TypeErase = FLASH_TYPEERASE_SECTORS;
+	EraseInitStruct.VoltageRange = FLASH_VOLTAGE_RANGE_3;
+	EraseInitStruct.Sector = StartSector;
+	EraseInitStruct.NbSectors = (EndSector - StartSector) + 1;
 
-	  }
+	/* Note: If an erase operation in Flash memory also concerns data in the data or instruction cache,
+	 you have to make sure that these data are rewritten before they are accessed during code
+	 execution. If this cannot be done safely, it is recommended to flush the caches by setting the
+	 DCRST and ICRST bits in the FLASH_CR register. */
+	if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK) {
+		return HAL_FLASH_GetError();
 
-	  /* Program the user Flash area word by word
-	    (area defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR) ***********/
+	}
 
-	   while (sofar<numberofbytes)
-	   {
-	     if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, StartSectorAddress, Data[sofar]) == HAL_OK)
-	     {
-	    	 StartSectorAddress += 1;  // use StartPageAddress += 2 for half word and 8 for double word
-	    	 sofar++;
-	     }
-	     else
-	     {
-	       /* Error occurred while writing data in Flash memory*/
-	    	 return HAL_FLASH_GetError ();
-	     }
-	   }
+	/* Program the user Flash area word by word
+	 (area defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR) ***********/
+//	while (sofar < numberofbytes) {
+//		uint8_t dd = Data[sofar];
+//		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, StartSectorAddress,
+//				Data[sofar]) == HAL_OK) {
+//			StartSectorAddress += 1; // use StartPageAddress += 2 for half word and 8 for double word
+//			sofar++;
+//		} else {
+//			/* Error occurred while writing data in Flash memory*/
+//			return HAL_FLASH_GetError();
+//		}
+//	}
 
-	  /* Lock the Flash to disable the flash control register access (recommended
-	     to protect the FLASH memory against possible unwanted operation) *********/
-	  HAL_FLASH_Lock();
+	while (sofar < PAGE_SIZE) {
+		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, FirstAddr,
+				DataSave[sofar]) == HAL_OK) {
+			FirstAddr += 1; // use StartPageAddress += 2 for half word and 8 for double word
+			sofar++;
+		} else {
+			/* Error occurred while writing data in Flash memory*/
+			return HAL_FLASH_GetError();
+		}
+	}
 
-	   return 0;
+	/* Lock the Flash to disable the flash control register access (recommended
+	 to protect the FLASH memory against possible unwanted operation) *********/
+	HAL_FLASH_Lock();
+
+	return 0;
 }
 
 /**************************************************************************************
@@ -224,14 +280,14 @@ uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t 
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void Write_Flash(uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofbytes) {
+void Write_Flash(uint32_t StartSectorAddress, uint8_t *Data,
+		uint16_t numberofbytes) {
 	if (StartSectorAddress >= 0x08000000 && StartSectorAddress <= 0x0800BFFF) { //addresses with redundancy
-		// The addresses are separated 0x4000 positions
+	// The addresses are separated 0x4000 positions
 		Flash_Write_Data(StartSectorAddress, Data, numberofbytes);
 		Flash_Write_Data(StartSectorAddress + 0x4000, Data, numberofbytes);
 		Flash_Write_Data(StartSectorAddress + 0x8000, Data, numberofbytes);
-	}
-	else {
+	} else {
 		Flash_Write_Data(StartSectorAddress, Data, numberofbytes);
 	}
 }
@@ -249,18 +305,17 @@ void Write_Flash(uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofby
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numberofbytes)
-{
-	while (1)
-	{
-		*RxBuf = *(__IO uint8_t *)StartSectorAddress;
+void Flash_Read_Data(uint32_t StartSectorAddress, uint8_t *RxBuf,
+		uint16_t numberofbytes) {
+	while (1) {
+		*RxBuf = *(__IO uint8_t*) StartSectorAddress;
 		StartSectorAddress += 1;
 		RxBuf++;
 		numberofbytes--;
-		if (numberofbytes == 0) break;
+		if (numberofbytes == 0)
+			break;
 	}
 }
-
 
 /**************************************************************************************
  *                                                                                    *
@@ -278,7 +333,7 @@ void Flash_Read_Data (uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numb
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void Check_Redundancy(uint32_t Address, uint8_t *RxDef, uint16_t numberofbytes){
+void Check_Redundancy(uint32_t Address, uint8_t *RxDef, uint16_t numberofbytes) {
 	uint8_t lect1[numberofbytes], lect2[numberofbytes], lect3[numberofbytes];
 	Flash_Read_Data(Address, lect1, numberofbytes);
 	Flash_Read_Data(Address + 0x4000, lect2, numberofbytes);
@@ -286,14 +341,16 @@ void Check_Redundancy(uint32_t Address, uint8_t *RxDef, uint16_t numberofbytes){
 
 	bool coincidence12 = true, coincidence13 = true, coincidence23 = true;
 	for (int i = 0; i < numberofbytes; i++) {
-		if (lect1[i] != lect2[i]) coincidence12 = false;
-		if (lect1[i] != lect3[i]) coincidence13 = false;
-		if (lect2[i] != lect3[i]) coincidence23 = false;
+		if (lect1[i] != lect2[i])
+			coincidence12 = false;
+		if (lect1[i] != lect3[i])
+			coincidence13 = false;
+		if (lect2[i] != lect3[i])
+			coincidence23 = false;
 	}
-	if(coincidence12 || coincidence13) {
+	if (coincidence12 || coincidence13) {
 		Flash_Read_Data(Address, RxDef, numberofbytes);
-	}
-	else if(coincidence23) {
+	} else if (coincidence23) {
 		Flash_Read_Data(Address + 0x4000, RxDef, numberofbytes);
 	}
 
@@ -301,7 +358,6 @@ void Check_Redundancy(uint32_t Address, uint8_t *RxDef, uint16_t numberofbytes){
 		*RxDef = lect1; /*PREGUNTAR QUÈ FER QUAN NO COINCIDEIX CAP LECTURA (POC PROBABLE)*/
 	}
 }
-
 
 /**************************************************************************************
  *                                                                                    *
@@ -317,11 +373,11 @@ void Check_Redundancy(uint32_t Address, uint8_t *RxDef, uint16_t numberofbytes){
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void Read_Flash(uint32_t StartSectorAddress, uint8_t *RxBuf, uint16_t numberofbytes) {
+void Read_Flash(uint32_t StartSectorAddress, uint8_t *RxBuf,
+		uint16_t numberofbytes) {
 	if (StartSectorAddress >= 0x08000000 && StartSectorAddress <= 0x0800BFFF) { //addresses with redundancy
 		Check_Redundancy(StartSectorAddress, RxBuf, numberofbytes);
-	}
-	else {
+	} else {
 		Flash_Read_Data(StartSectorAddress, RxBuf, numberofbytes);
 	}
 }

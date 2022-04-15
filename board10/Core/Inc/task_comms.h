@@ -11,8 +11,8 @@
 #include "definitions.h"
 #include "configuration.h"
 #include "comms.h"
-void vCommsTask(void *pvParameters);
 
+void vCommsTask(void *pvParameters);
 
 
 #endif /* INC_TASK_COMMS_H_ */

@@ -56,7 +56,11 @@ void checkbatteries(I2C_HandleTypeDef *hi2c) {
  **************************************************************************************/
 void deployment(I2C_HandleTypeDef *hi2c) {
 	bool deployment = false;
-	while (system_state(&hi2c) == 0) {
+	uint8_t nominal, low, critical;
+	Read_Flash(NOMINAL_ADDR, &nominal, sizeof(nominal));
+	Read_Flash(LOW_ADDR, &low, sizeof(low));
+	Read_Flash(CRITICAL_ADDR, &critical, sizeof(critical));
+	while (system_state(&hi2c,nominal,low,critical) == 0) {
 		/*Give high voltage to the resistor to burn the wire, TBD TIME AND VOLTAGE*/
 	}
 	deployment = true;
@@ -101,7 +105,7 @@ void check_position() {
  * Function:  init			                                               	  		  *
  * --------------------                                                               *
  * Simulates the "INIT" state: detumbling and deployment of the antennas. If all	  *
- * goes as expected, the next state is IDLE											  *
+ * goes as expected, the next state is CHECK										  *
  *																					  *
  *  hi2c: I2C to read temperatures in system_state()			    				  *
  *															                          *
@@ -112,21 +116,27 @@ void init(I2C_HandleTypeDef *hi2c) {
 	bool deployment_state, deploymentRF_state;
 	Read_Flash(DEPLOYMENT_STATE_ADDR, &deployment_state, 1); //read the indicator of the deployment of comms antenna
 	Read_Flash(DEPLOYMENTRF_STATE_ADDR, &deploymentRF_state, 1); //read the indicator of the deployment of PL2 antenna
-	uint8_t currentState;
-	if (!system_state(&hi2c))
-		currentState = CONTINGENCY;
+	uint8_t currentStateinit,nominal, low, critical;
+
+	Read_Flash(NOMINAL_ADDR, &nominal, sizeof(nominal));
+	Read_Flash(LOW_ADDR, &low, sizeof(low));
+	Read_Flash(CRITICAL_ADDR, &critical, sizeof(critical));
+
+	// If battery level is low --> CONTINGENCY
+	if (system_state(&hi2c,nominal,low,critical)>0)
+		currentStateinit = CONTINGENCY;
 	else {
+		// If we the deployment is not done yet
 		if (!deployment_state)
 			deployment(&hi2c);
 		//Just in the PocketQube with the RF antenna
 		if (!deploymentRF_state)
 			deploymentRF(&hi2c);
 
-		// thread de adcs
-		detumble(&hi2c);
-		currentState = CHECK;
+		currentStateinit = CHECK;
 	}
-	Write_Flash(CURRENT_STATE_ADDR, &currentState, sizeof(currentState));
+	// Escribim a memoria el nou estat
+	Write_Flash(CURRENT_STATE_ADDR, currentStateinit, sizeof(currentStateinit));
 }
 
 /**************************************************************************************
@@ -170,39 +180,44 @@ void initsensors(I2C_HandleTypeDef *hi2c) {
  *																					  *
  *  hi2c: I2C to read from the temperature sensors				    				  *
  *															                          *
- *  returns: True if everything is okay					                              *
- *  		 False if temperatures are too much high or battery low					  *
+ *  returns: Value between 0-3					                              		  *
+ *  		 0: If battery level between 100%-NOMINAL								  *
+ *  		 1: If battery level between NOMINAL-LOW								  *
+ *  		 2: If battery level between LOW-CRITICAL								  *
+ *  		 3: If battery level lower than CRITICAL								  *
  *                                                                                    *
  **************************************************************************************/
-int system_state(I2C_HandleTypeDef *hi2c) {
-	uint8_t nominal, low, critical, battery_capacity;
+int system_state(I2C_HandleTypeDef *hi2c, uint8_t nominal, uint8_t low, uint8_t critical) {
+	uint8_t battery_capacity;
 
 	/*If checktemperature returns false, there are different cases which must be distinguished:
 	 * 	- More than three temperature sensors are hot => start rotating the satellite
 	 * 	- Battery temperature is too hot => THIS CASE MUST BE STUDIED
 	 * 	- MCU temperature out of operating range => THIS CASE MUST BE STUDIED */
 	if (!checktemperature(hi2c)) /*rotate_satellite*/
-		;
+	{
+		//NOTIFY ADCS --> ROTATE_NOTI
+	}
 
 	checkbatteries(hi2c);
 
-	/*Read from memory the threshold NOMINAL, LOW, CRITICAL and the current BATTERY LEVEL*/
+	/*Read from memory the BATTERY LEVEL*/
 	Read_Flash(BATT_LEVEL_ADDR, &battery_capacity, 1);
-	Read_Flash(NOMINAL_ADDR, &nominal, 1);
-	Read_Flash(LOW_ADDR, &low, 1);
-	Read_Flash(CRITICAL_ADDR, &critical, 1);
-	if (battery_capacity < nominal)
-		return 1;
+
+	// BATERRY LEVEL < CRITICAL --> 3 (WORSE CASE) = SURVIVAL STATE
+	if (battery_capacity < critical)
+		return 3;
+	// CRITICAL <= BATERRY LEVEL < LOW --> 2 = SUNSAFE STATE
 	else if (battery_capacity < low)
 		return 2;
-	else if (battery_capacity < critical)
-		return 3;
+	// LOW <= BATERRY LEVEL < NOMINAL --> 1 = CONTINGENCY STATE
+	else if (battery_capacity < nominal)
+		return 1;
+	// BATERRY LEVEL >= NOMINAL --> 0 (IDEAL CASE) = CHECK STATE
 	else
 		return 0;
 }
 
-// Una funcion que ncluya todas los posibles valores de nivel de bateria,
-// retorna un valor del 0-3 dependiendo del estado de la bateria ? Aqui ya se hara la comparación
 
 /**************************************************************************************
  *                                                                                    *
@@ -219,9 +234,10 @@ int system_state(I2C_HandleTypeDef *hi2c) {
  **************************************************************************************/
 bool checktemperature(I2C_HandleTypeDef *hi2c) {
 	Temperatures temp;
+	int N = 7; // Number of sensors not defined yet
 	Flash_Read_Data(TEMP_ADDR, &temp.raw, sizeof(temp));
 	int i, cont = 0;
-	for (i = 1; i <= 7; i++) {  //number of sensors not defined yet
+	for (i = 1; i <= N; i++) {
 
 		switch (i) {
 
@@ -280,16 +296,22 @@ void heater(int state) {
 
 /**************************************************************************************
  *                                                                                    *
- * Function:  unixTime                                            	  		  		  *
+ * Function:  PL_Time                                            	  		  		  *
  * --------------------                                                               *
- * Converts the time in Unix Format and returns it in an array of size 4			  *
+ * Converts the time in Unix Format and returns it in a variable time_t			      *
  *																					  *
- *  sTime,sDate: read from RTC from date and time			    				      *
+ *  hrtc: RTC to read from the date and time			    				      *
  *															                          *
- *  returns: uint8_t t[4] with the time in unix format								  *
+ *  returns: timestamp with the time in unix format								      *
  *  		 																		  *
  **************************************************************************************/
-time_t PL_Time(RTC_TimeTypeDef *sTime, RTC_DateTypeDef *sDate) {
+void RTC_Time(RTC_TimeTypeDef *sTime, RTC_DateTypeDef *sDate) {
+	//Get the time and date
+//	RTC_TimeTypeDef sTime = { 0 };
+//	RTC_DateTypeDef sDate = { 0 };
+//	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+//	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+	//Make the conversion
 	//January and February are counted as months 13 and 14 of the previous year
 	time_t timestamp;
 	struct tm currTime;
@@ -301,6 +323,66 @@ time_t PL_Time(RTC_TimeTypeDef *sTime, RTC_DateTypeDef *sDate) {
     currTime.tm_sec = sTime->Seconds;
 
     timestamp = mktime(&currTime);
-    return timestamp;
-
+    uint32_t ttt = (uint32_t)timestamp;
+    uint8_t data[4] = {0};
+    memcpy(data, &ttt, sizeof(ttt));
+    Write_Flash(RTC_TIME_ADDR, data, sizeof(data));
+    uint32_t timeread;
+    Read_Flash(RTC_TIME_ADDR, &timeread, 4);
 }
+
+
+
+
+  /// @brief      Obtain the STM32 system reset cause
+  /// @param      None
+  /// @return     The system reset cause
+
+reset_cause_t reset_cause_get(void)
+  {
+      reset_cause_t reset_cause;
+
+      if (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST))
+      {
+          reset_cause = RESET_CAUSE_LOW_POWER_RESET;
+      }
+      else if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST))
+      {
+          reset_cause = RESET_CAUSE_WINDOW_WATCHDOG_RESET;
+      }
+      else if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST))
+      {
+          reset_cause = RESET_CAUSE_INDEPENDENT_WATCHDOG_RESET;
+      }
+      else if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST))
+      {
+          // This reset is induced by calling the ARM CMSIS
+          // `NVIC_SystemReset()` function!
+          reset_cause = RESET_CAUSE_SOFTWARE_RESET;
+      }
+      else if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST))
+      {
+          reset_cause = RESET_CAUSE_POWER_ON_POWER_DOWN_RESET;
+      }
+      else if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST))
+      {
+          reset_cause = RESET_CAUSE_EXTERNAL_RESET_PIN_RESET;
+      }
+      // Needs to come *after* checking the `RCC_FLAG_PORRST` flag in order to
+      // ensure first that the reset cause is NOT a POR/PDR reset. See note
+      // below.
+      else if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST))
+      {
+          reset_cause = RESET_CAUSE_BROWNOUT_RESET;
+      }
+      else
+      {
+          reset_cause = RESET_CAUSE_UNKNOWN;
+      }
+
+      // Clear all the reset flags or else they will remain set during future
+      // resets until system power is fully removed.
+      __HAL_RCC_CLEAR_RESET_FLAGS();
+
+      return reset_cause;
+  }

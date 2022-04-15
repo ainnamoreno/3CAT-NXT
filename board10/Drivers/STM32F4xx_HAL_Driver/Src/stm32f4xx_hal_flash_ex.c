@@ -125,6 +125,7 @@ static HAL_StatusTypeDef FLASH_OB_BootConfig(uint8_t BootConfig);
 #endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F469xx || STM32F479xx */
 
 extern HAL_StatusTypeDef         FLASH_WaitForLastOperation(uint32_t Timeout);
+
 /**
   * @}
   */

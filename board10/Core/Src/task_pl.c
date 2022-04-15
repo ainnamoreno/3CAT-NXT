@@ -4,46 +4,54 @@
  *  Created on: 28 mar. 2022
  *      Author: ainna
  */
-#include "definitions.h"
-#include "configuration.h"
-#include "payload_camera.h"
+
+#include "task_pl.h"
 
 void vPayloadTask(void *pvParameters) {
-	RTC_TimeTypeDef sTime = { 0 };
-	RTC_DateTypeDef sDate = { 0 };
 
-	uint32_t payload_time;
-	const char *pcTaskName = "Task Payload";
+	uint32_t payload_time, realTime_int;
+	const char *pcTaskName = "Task PAYLOAD";
+	//TODO: Pasarli el hrtc !!!
+
+
+	// signal to wait son les possibles senyals que podem rebre
+	uint32_t signal_to_wait = 0;
+	uint32_t signal_received = 0;
 
 	for (;;) {
-		// Wait until comms notify us to take data
-		//while (!Take_Photo_noti) {
-		//}
+		// Esperar 1a notificació a COMMS fer foto
 
-		// How much time to make the antenna point to the Earth
-		// ADCS: Antenna points to the Earth
-		// antenna_pointing() --> ADCS
+		if (xTaskNotifyWait(0, signal_to_wait, &signal_received,portMAX_DELAY) == pdTRUE) {
+			if (signal_received & TAKEPHOTO_NOTI) {
+				// Inicialitzar la camara (activar PIN VCC)
 
-		// Read from memory the time to use the payload (Exact time)
-		Read_Flash(PL_TIME_ADDR, &payload_time, sizeof(payload_time));
+				// Read from memory the time to use the payload (Exact time)
+				Read_Flash(PL_TIME_ADDR, &payload_time, sizeof(payload_time));
+				// Esperar 2a notificació a que ADCS estigui apuntant
+				if (xTaskNotifyWait(0, signal_to_wait, &signal_received,
+				portMAX_DELAY) == pdTRUE) {
+					if (signal_received & POINTING_NOTI) {
+						// Wait until the times coincide
+						do {
+							//RTC
+							realTime_int = PL_Time(&hrtc);
 
-		//Read the real time clock
-		HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-		HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+						} while (payload_time > realTime_int);
 
-		// We convert the Data and Time into UnixFormat
-		uint8_t real_time;
-		t(real_time, &sTime, &sDate);
-		// Wait until the times coincide
-		while (payload_time > real_time) {
+						// Take Data
+						while (!takePhoto(&huart1))
+							;
+						// resetCommsParams();
+
+						// xTaskNotify("Task OBC", DONEPHOTO_NOTI, eSetBits);
+						// Apagar la PAYLOAD
+					}
+				}
+			}
+			if (signal_received & CONTINGENCY_NOTI) {
+				vDeleteTask();
+			}
+
 		}
-		// Take Data
-		// takePhoto();
-		resetCommsParams();
-
-		// Second DATA_TAKEN_noti to COOMS_task !!!
-
-		// if CONTINGENCY_state_noti
-		// vDeleteTask()
 	}
 }

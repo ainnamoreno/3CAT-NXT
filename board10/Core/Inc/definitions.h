@@ -21,7 +21,10 @@
 //#include "stm32f4xx_hal_uart.h"
 #include <stm32f4xx_hal.h>
 #include "FreeRTOS.h"
+#include "task.h"
 #include "utils.h"
+#include "eeprom.h"
+
 /*Temperature range operation of STM32L162VE*/
 #define TEMP_MIN -40
 #define TEMP_MAX 105

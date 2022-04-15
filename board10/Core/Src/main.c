@@ -77,7 +77,6 @@ static void MX_RTC_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -95,21 +94,7 @@ int main(void) {
 	HAL_Init();
 
 	/* USER CODE BEGIN Init */
-	RTC_TimeTypeDef sTime = { 0 };
-	RTC_DateTypeDef sDate = { 0 };
-	initsensors(&hi2c1);
-	uint8_t currentState, exit_low, battery, nominal;
-	Write_Flash(CURRENT_STATE_ADDR, INIT, 1);
-	Read_Flash(CURRENT_STATE_ADDR, &currentState, sizeof(currentState));
-	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-	time_t tempssss = PL_Time(&sTime, &sDate);
 
-	pthread_t thread_comms;
-	bool payload_state; //bool which indicates when do we need to go to PAYLOAD state
-	bool comms_state; //bool which indicates if we are in region of contact with GS, then go to COMMS state
-	char time[30];
-	char date[30];
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
@@ -126,17 +111,78 @@ int main(void) {
 	MX_SPI1_Init();
 	MX_I2C1_Init();
 	MX_USB_OTG_FS_HCD_Init();
-	MX_IWDG_Init();
-	MX_WWDG_Init();
+	//MX_IWDG_Init();
+	//MX_WWDG_Init();
 	MX_RTC_Init();
-	/* USER CODE BEGIN 2 */
 
+	// MIRAR PERQUE FA EL RESET
+	reset_cause_t reset_cause = reset_cause_get();
+	/* USER CODE BEGIN 2 */
+	/* USER CODE BEGIN Init */
+
+	// INITIALIZE SENSORS
+	initsensors(&hi2c1);
+
+	// RTC TEST
+		RTC_TimeTypeDef sTime = { 0 };
+		RTC_DateTypeDef sDate = { 0 };
+		HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+		HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+		// Save in RTC_TIME_ADDR
+		RTC_Time(&sTime, &sDate);
+
+	uint8_t currentState, exit_low, nominal, low, critical;
+	Write_Flash(CURRENT_STATE_ADDR, INIT, 1);
+
+	Read_Flash(CURRENT_STATE_ADDR, &currentState, sizeof(currentState));
+
+	// Update the battery thresholds
+	Write_Flash(NOMINAL_ADDR, 90, sizeof(90));
+	Read_Flash(NOMINAL_ADDR, &nominal, sizeof(nominal));
+	Write_Flash(LOW_ADDR, 85, sizeof(85));
+	Read_Flash(LOW_ADDR, &low, sizeof(low));
+	Write_Flash(CRITICAL_ADDR, 80, sizeof(80));
+	Read_Flash(CRITICAL_ADDR, &critical, sizeof(critical));
+
+
+
+	//Només les notis que farem cas amb un |
+
+	// Signals related to NOTIFICATIONS
+	uint32_t signal_received,signal_to_wait;
+	uint32_t settime;
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		//system_state(&hi2c1);
+
+		//Look for a new notification
+		if (xTaskNotifyWait(0, signal_to_wait, &signal_received,
+				portMAX_DELAY) == pdTRUE) {
+			if (signal_received & NOMINAL_NOTI) {
+				//If GS changed the NOMINAL thereshold
+				Read_Flash(NOMINAL_ADDR, &nominal, sizeof(nominal));
+			}
+			if (signal_received & LOW_NOTI) {
+				//If GS changed the LOW thereshold
+				Read_Flash(LOW_ADDR, &low, sizeof(low));
+			}
+			if (signal_received & CRITICAL_NOTI) {
+				//If GS changed the CRITICAL thereshold
+				Read_Flash(CRITICAL_ADDR, &critical, sizeof(critical));
+			}
+			if (signal_received & SETTIME_NOTI) {
+				//If GS send TIME
+				Read_Flash(SET_TIME_ADDR, &settime, sizeof(critical));
+			}
+			if (signal_received & GS_NOTI) {
+				//If contact region with GS -> NOTIFY COMMS
+				xTaskNotify("Task COMMS", GS_NOTI, eSetBits);
+			}
+		}
+
 		switch (currentState) {
 
 		case CHECK:
@@ -147,9 +193,10 @@ int main(void) {
 
 			// It is only done the first time we enter to IDLE
 			// We send notifications to COMMS, ADCS tasks to start tunning (IDLE_State_noti)
-			Write_Flash(PREVIOUS_STATE_ADDR, CHECK, 1);
-			if (system_state(&hi2c1) > 0) {
+			if (system_state(&hi2c1,nominal,low,critical) > 0) {
 				currentState = CONTINGENCY;
+				// Actualitzem l'estat només si canviem d'estat
+				Write_Flash(PREVIOUS_STATE_ADDR, CHECK, 1);
 				Write_Flash(CURRENT_STATE_ADDR, currentState,
 						sizeof(currentState));
 			} else {
@@ -197,27 +244,35 @@ int main(void) {
 			 *Out of CONTINGENCY State when batterylevel is NOMINAL
 			 */
 			// TODO: LOW POWER RUN MODE (De momento podriem fer un SleepMode)
-			// Avisar a COMMS que entrem en CONTINGENCY
-			// Si >1, vol dir que bateria per sota de LOW
-			do {
-				Read_Flash(EXIT_LOW_POWER_FLAG_ADDR, &exit_low, 1);
-				Read_Flash(BATT_LEVEL_ADDR, &battery, 1);
-				Read_Flash(NOMINAL_ADDR, &nominal, 1);
-				// Mentre no rebem cap avís de la GS no fem res
-				while (!exit_low) {
+			// Avisar a COMMS que entrem en CONTINGENCY (enviar paquet de telemetria)
+			// S'envia cada vegada que rebem un EXITLOWPOWER_NOTI i la bateria no millora
+			xTaskNotify("Task COMMS", CONTINGENCY_NOTI, eSetBits);
+
+			// Esperem que COMMS rebi telecommand de la GS (EXITLOWPOWER_NOTI)
+			if (xTaskNotifyWait(0, signal_to_wait, &signal_received,
+					portMAX_DELAY) == pdTRUE) {
+				if (signal_received & EXITLOWPOWER_NOTI) {
+					// Mirem el nivell de bateria
+					// Si ha empitjorat
+					if (system_state(&hi2c1,nominal,low,critical) > 1) {
+						currentState = SUNSAFE;
+						// Actualitzem l'estat només si canviem d'estat
+						Write_Flash(PREVIOUS_STATE_ADDR, CONTINGENCY, 1);
+						Write_Flash(CURRENT_STATE_ADDR, currentState,
+								sizeof(currentState));
+
+						// Si ha millorat
+					} else if (system_state(&hi2c1,nominal,low,critical) == 0) {
+						/*Return to Run Mode*/
+						currentState = CHECK;
+						// Actualitzem l'estat només si canviem d'estat
+						Write_Flash(PREVIOUS_STATE_ADDR, CONTINGENCY, 1);
+						Write_Flash(CURRENT_STATE_ADDR, currentState,
+								sizeof(currentState));
+					}
 				}
-				// Mira el nivell de bateria
-				// Si ha empitjorat
-				if (system_state(&hi2c1) > 1) {
-					currentState = SUNSAFE;
-					// Si ha millorat
-					/*Return to Run Mode*/
-				} else if (system_state(&hi2c1) < 1) {
-					currentState = CHECK;
-				}
-			} while (battery < nominal + BATT_THRESHOLD);
-			Write_Flash(PREVIOUS_STATE_ADDR, CONTINGENCY, 1);
-			Write_Flash(CURRENT_STATE_ADDR, currentState, sizeof(currentState));
+			}
+
 			// Una opció és fer reset total del satelit quan surti de contingency
 
 			break;
@@ -226,37 +281,58 @@ int main(void) {
 			Write_Flash(PREVIOUS_STATE_ADDR, SUNSAFE, 1);
 			// Entrem en el SleepMode
 			// HAL_PWR_EnterSLEEPMode();
-			// Mentre bateria per sota de LOW
-			while (system_state(&hi2c1) == 2) {
-				// Watchdog inicialitza
-				// Reinicia cada 33 segons
-				HAL_Delay(30000);
-				HAL_IWDG_Refresh(&hiwdg);
-				// Watchdog surt del SleepMode automaticament --> com modificar els 33s
-			}
-			if (system_state(&hi2c1) > 2)
+
+			// IWDG initialize
+			// HAL_Delay(30000);
+			// Refresh IWDG to avoid reseting the system
+			HAL_IWDG_Refresh(&hiwdg);
+			// IWDG ens permet sortir del SleepMode automaticament
+			// Mirem si ha millorat o empitjorat la bateria
+			// system_state = 3 --> battery level < CRITICAL
+			if (system_state(&hi2c1,nominal,low,critical) == 3) {
 				currentState = SURVIVAL;
-			else if (system_state(&hi2c1) == 1)
+				// Actualitzem l'estat només si canviem d'estat
+				Write_Flash(PREVIOUS_STATE_ADDR, SUNSAFE, 1);
+				Write_Flash(CURRENT_STATE_ADDR, currentState,
+						sizeof(currentState));
+
+				// system_state = 1 --> LOW < battery level < NOMINAL
+			} else if (system_state(&hi2c1,nominal,low,critical) == 1) {
 				/*Return to Run Mode*/
 				currentState = CONTINGENCY;
-
+				// Actualitzem l'estat només si canviem d'estat
+				Write_Flash(PREVIOUS_STATE_ADDR, SUNSAFE, 1);
+				Write_Flash(CURRENT_STATE_ADDR, currentState,
+						sizeof(currentState));
+			}
 			break;
 
 		case SURVIVAL:
 			// Anar a mode Low Power Sleep Mode
 			// Necessitem el IDWD
-			// Surt del mode automaticament ??
-			// checkbatteries() i mirar quan podem anar a CONTINGENCY
-			// Fins que no superem el llindar de LOW
-			while (system_state(&hi2c1) > 1) {
+			// Refresh IWDG to avoid reseting the system
+			HAL_IWDG_Refresh(&hiwdg);
+			// Només podem anar a CONTINGENCY
+			if (system_state(&hi2c1,nominal,low,critical) == 1) {
+				currentState = CONTINGENCY;
+				// Actualitzem l'estat només si canviem d'estat
+				Write_Flash(PREVIOUS_STATE_ADDR, SURVIVAL, 1);
+				Write_Flash(CURRENT_STATE_ADDR, currentState,
+						sizeof(currentState));
 			}
-			Write_Flash(PREVIOUS_STATE_ADDR, SURVIVAL, 1);
-			currentState = CONTINGENCY;
+
 			break;
 
 		case INIT:
 			init(&hi2c1);
 			Write_Flash(PREVIOUS_STATE_ADDR, INIT, 1);
+			Read_Flash(CURRENT_STATE_ADDR, &currentState, sizeof(currentState));
+			// Wake up COMMS and ADCS tasks
+			xTaskNotify("Task ADCS", DONEPHOTO_NOTI, eSetBits);
+			xTaskNotify("Task COMMS", DONEPHOTO_NOTI, eSetBits);
+			// Send notification to ADCS --> DETUMBLING_NOTI
+			//xTaskNotify("Task ADCS", DETUMBLING_NOTI, eSetBits);
+
 			break;
 			/*If we reach this state something has gone wrong*/
 		default:
@@ -290,11 +366,9 @@ void SystemClock_Config(void) {
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI
-			| RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_HSE;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI
+			| RCC_OSCILLATORTYPE_HSE;
 	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
 	RCC_OscInitStruct.LSIState = RCC_LSI_ON;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
@@ -309,7 +383,7 @@ void SystemClock_Config(void) {
 	 */
 	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
 			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
@@ -317,6 +391,9 @@ void SystemClock_Config(void) {
 	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
 		Error_Handler();
 	}
+	/** Enables the Clock Security System
+	 */
+	HAL_RCC_EnableCSS();
 }
 
 /**
@@ -614,6 +691,7 @@ static void MX_WWDG_Init(void) {
 static void MX_GPIO_Init(void) {
 
 	/* GPIO Ports Clock Enable */
+	__HAL_RCC_GPIOC_CLK_ENABLE();
 	__HAL_RCC_GPIOH_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
