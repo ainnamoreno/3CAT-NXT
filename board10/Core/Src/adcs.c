@@ -22,6 +22,7 @@
 
 
 
+
 void matrix_prod3x3(Matrix3x3 *m1, Matrix3x3 *m2, Matrix3x3 *res)
 {
     res->col1[0] = m1->col1[0]*m2->col1[0]+m1->col2[0]*m2->col1[1]+m1->col3[0]*m2->col1[2];
@@ -235,38 +236,32 @@ void AngularVelocity(I2C_HandleTypeDef *hi2c1, double *w){
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void readPhotodiodes(ADC_HandleTypeDef *hadc) { // I think the four ADC should be passed as parameters
+void readPhotodiodes(ADC_HandleTypeDef *hadc, int num) { // I think the four ADC should be passed as parameters
 	/*3 photodiodes are directly connected to 3 of the 4 ADC pins
 	 * the other 3 photodiodes are connected through the inputs 1,2 and 3 of a multiplexor*/
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
-	singlePhotodiode(hadc);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
-	singlePhotodiode(hadc);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
-	singlePhotodiode(hadc);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
+	uint32_t sides[6];
+	double conversionValue = 3.3/pow(2,14);
+	if(num == 0){//cara1
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_SET);
+		sides[0] = HAL_ADC_GetValue(&hadc)*conversionValue;
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_RESET);
+	}else if(num == 1){
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
+		sides[1] = HAL_ADC_GetValue(&hadc)*conversionValue;
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
+	}else if(num == 2){
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
+		sides[2] = HAL_ADC_GetValue(&hadc)*conversionValue;
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
+	}else if(num == 3){
+
+		sides[3] = HAL_ADC_GetValue(&hadc);
+
+	}
 
 }
 
 void sun_vector(ADC_HandleTypeDef *hadc, double *s){
-
-
-
-}
-/**************************************************************************************
- *                                                                                    *
- * Function:  singlePhotodiode                                         		  		  *
- * --------------------                                                               *
- * Obtains the output value from a single photodiode.								  *
- *                                                                                    *
- *  hadc: ADC to read outputs from the photodiodes				    				  *
- *															                          *
- *  returns: Nothing									                              *
- *                                                                                    *
- **************************************************************************************/
-void singlePhotodiode(ADC_HandleTypeDef *hadc) {
 
 
 
@@ -321,6 +316,7 @@ void MagneticField(I2C_HandleTypeDef *hi2c1, double *m){
 /*************************************************************************************/
 void CurrentToCoil(I2C_HandleTypeDef *hi2c1, double intensidad[3]){
 
+
 	int auxCurrent[3];
 	char *currentToApply, *data_1, *data_2, *signCurrent;
 	char finalCurrent[16] = {1,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0};
@@ -328,6 +324,14 @@ void CurrentToCoil(I2C_HandleTypeDef *hi2c1, double intensidad[3]){
 	auxCurrent[1]=round(intensidad[1]*1023/0.150);
 	auxCurrent[2]=round(intensidad[2]*1023/0.150);
 	uint8_t data[4] = {0x66, 0x00, 0x00, 0x90};
+
+//	uint8_t st = 100;
+//	uint8_t tm = 101;
+//	uint8_t pd = 1;
+//	uint16_t current = 1023;
+//	uint8_t buffer[3];
+//	memcpy(buffer, (tm<<2) | (st<<5) | (current<<12) | (pd<<23), 4);
+
 
 	if(auxCurrent[0]>0){//LV1
 
@@ -436,7 +440,6 @@ void CurrentToCoil(I2C_HandleTypeDef *hi2c1, double intensidad[3]){
 
 void nadir_algorithm(I2C_HandleTypeDef *hi2c1, float euler[3], float angle0[2]){
 
-
 	double gyr_read[3], mag_read[3], intensity[3], magneticDipole[3], w[3], m[3], a;
 	double kp[3] = {5.49359905270580e-06, 3.80118411237760e-06, 8.02831030719022e-14};
 	double kd[3] = {0.000206390535670685, 0.000156635557926080, 5.39645941623300e-08};
@@ -444,12 +447,12 @@ void nadir_algorithm(I2C_HandleTypeDef *hi2c1, float euler[3], float angle0[2]){
 	double maxMagneticDipole2 = 0.03234;
 	double maxIntensity1 = 0.14681;
 	double maxIntensity2 = 0.1495;
-	angle0[0] = 0;
-	angle0[1] = 0;
+	angle0[0] = 0;//desired angle
+	angle0[1] = 0;//desired angle
 	float angle_e[3];
 	double idealTorque[3] = {0, 0, 0};
 
-	angle_e[0] = &euler[3]-angle0;
+	angle_e[0] = &euler[3]-angle0;//angle error
 	angle_e[1] = &euler[2]-angle0;
 	angle_e[2] = 0;
 	AngularVelocity(hi2c1, w);

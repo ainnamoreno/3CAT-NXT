@@ -55,7 +55,7 @@ void tumble(I2C_HandleTypeDef *hi2c);
 
 void AngularVelocity(I2C_HandleTypeDef *hi2c1, double *w);
 
-void readPhotodiodes(ADC_HandleTypeDef *hadc);
+void readPhotodiodes(ADC_HandleTypeDef *hadc, int num);
 
 void singlePhotodiode(ADC_HandleTypeDef *hadc);
 
