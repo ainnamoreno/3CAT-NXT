@@ -430,4 +430,3 @@ void HAL_HCD_MspDeInit(HCD_HandleTypeDef* hhcd)
 
 /* USER CODE END 1 */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

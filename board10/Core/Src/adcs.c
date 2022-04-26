@@ -236,36 +236,59 @@ void AngularVelocity(I2C_HandleTypeDef *hi2c1, double *w){
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void readPhotodiodes(ADC_HandleTypeDef *hadc, int num) { // I think the four ADC should be passed as parameters
-	/*3 photodiodes are directly connected to 3 of the 4 ADC pins
-	 * the other 3 photodiodes are connected through the inputs 1,2 and 3 of a multiplexor*/
-	uint32_t sides[6];
+void readPhotodiodes(ADC_HandleTypeDef *hadc, uint32_t photoData[6]) { // I think the four ADC should be passed as parameters
+
+	uint32_t data[6];
 	double conversionValue = 3.3/pow(2,14);
-	if(num == 0){//cara1
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_SET);
-		sides[0] = HAL_ADC_GetValue(&hadc)*conversionValue;
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_RESET);
-	}else if(num == 1){
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
-		sides[1] = HAL_ADC_GetValue(&hadc)*conversionValue;
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
-	}else if(num == 2){
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
-		sides[2] = HAL_ADC_GetValue(&hadc)*conversionValue;
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
-	}else if(num == 3){
+	//Side 1
+	HAL_ADC_ConfigChannel(hadc, 0);
+	HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, 1000);
+	data[0] = HAL_ADC_GetValue(hadc)*conversionValue;
+	HAL_ADC_Stop(hadc);
+	//Side 2
+	HAL_ADC_ConfigChannel(hadc, 1);
+	HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, 1000);
+	data[1] = HAL_ADC_GetValue(hadc)*conversionValue;
+	HAL_ADC_Stop(hadc);
+	//Side 3
+	HAL_ADC_ConfigChannel(hadc, 2);
+	HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, 1000);
+	data[2] = HAL_ADC_GetValue(hadc)*conversionValue;
+	HAL_ADC_Stop(hadc);
+	//Side 4
+	HAL_ADC_ConfigChannel(hadc, 3);
+	HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, 1000);
+	data[3] = HAL_ADC_GetValue(hadc)*conversionValue;
+	HAL_ADC_Stop(hadc);
+	//Side 5
+	HAL_ADC_ConfigChannel(hadc, 4);
+	HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, 1000);
+	data[4] = HAL_ADC_GetValue(hadc)*conversionValue;
+	HAL_ADC_Stop(hadc);
+	//Side 2
+	HAL_ADC_ConfigChannel(hadc, 5);
+	HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, 1000);
+	data[5] = HAL_ADC_GetValue(hadc)*conversionValue;
+	HAL_ADC_Stop(hadc);
 
-		sides[3] = HAL_ADC_GetValue(&hadc);
+	photoData[0] = data[0];
+	photoData[1] = data[1];
+	photoData[2] = data[2];
+	photoData[3] = data[3];
+	photoData[4] = data[4];
+	photoData[5] = data[5];
 
-	}
+
+
 
 }
 
-void sun_vector(ADC_HandleTypeDef *hadc, double *s){
-
-
-
-}
 
 bool CheckGyro(I2C_HandleTypeDef *hi2c1){
 
@@ -480,6 +503,33 @@ void nadir_algorithm(I2C_HandleTypeDef *hi2c1, float euler[3], float angle0[2]){
 
 }
 
+void sensorData(I2C_HandleTypeDef *hi2c1, ADC_HandleTypeDef *hadc, mag_data *magData, gyro_data *gyroData, sun_vector *sunVector){
+
+	double w[3], m[3];
+	uint32_t data[6];
+	//get data from gyroscope
+	AngularVelocity(hi2c1, w);
+	//get data from magnetometer
+	MagneticField(hi2c1, m);
+	//get data from the photodiodes
+	readPhotodiodes(hadc, data);
+	//save the values from the gyroscope
+	gyroData->gx = w[0];
+	gyroData->gy = w[1];
+	gyroData->gz = w[2];
+	//save the values from the magnetometer
+	magData->mx = m[0];
+	magData->my = m[1];
+	magData->mz = m[2];
+	//save the values from the photodiodes
+	sunVector->x1 = data[0];
+	sunVector->x2 = data[1];
+	sunVector->y1 = data[2];
+	sunVector->y2 = data[3];
+	sunVector->z1 = data[4];
+	sunVector->z2 = data[5];
+
+}
 
 
 

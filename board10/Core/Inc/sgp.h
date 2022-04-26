@@ -38,13 +38,13 @@ double FMod2Pi(double x);
 
 double* linspace(double x1, double x2, int n);
 
-void sgp(orbit_t orbit, double *tVec, int nPts, double y_r[3][nPts], double y_v[3][nPts], pos_vel *posvel);
+void sgp(orbit_t orbit, double *tVec, int nPts, float y_r[3][nPts]);
 
 int sign(double x);
 
 double kepler(double u, double aYNSL, double aXNSL, double tol );
 
-void rV(double fk, double ik, double uk, double rk, double rDot, double rFDot, pos_vel *posvel);
+void rv(float fk, float ik, float uk, float rk, float rDot, float rFDot, float y[3][100]);
 
 
 

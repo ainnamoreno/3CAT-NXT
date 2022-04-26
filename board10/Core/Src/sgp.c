@@ -9,7 +9,7 @@
 #include "sgp.h"
 #include "math.h"
 #include "satutl.h"
-
+#define NPTS 100
 
 double* linspace(double x1, double x2, int n) {
 
@@ -57,32 +57,34 @@ double kepler(double u, double aYNSL, double aXNSL, double tol ){
 	return ePW;
 }
 
-void rv(double fk, double ik, double uk, double rk, double rDot, double rFDot, pos_vel *posvel){
+void rv(float fk, float ik, float uk, float rk, float rDot, float rFDot, float y[3][100]){
 
-	double x[14];
+	float x[14], pos[3], pos2[3];
 	x[0] = cos(fk); //cf
 	x[1] = sin(fk); //sf
 	x[2] = cos(ik); //cI
 	x[3] = sin(ik); //sI
-	x[4] = -x[1]*x[2]; //M[0]
-	x[5] = x[0]*x[2]; //M[1]
-	x[6] = x[3]; //M[2]
-	x[7] = x[0]; //N[0]
-	x[8] = x[1]; //N[1]
-	x[9] = 0;    //N[2]
-	x[10] = cos(uk); //cUK
-	x[11] = sin(uk); //sUK
-	x[12] = x[4]*x[11]+x[5]*x[11]+x[6]*x[11]+x[7]*x[10]+x[8]*x[10]+x[9]*x[10]; //U
-	x[13] = x[4]*x[10]+x[5]*x[10]+x[6]*x[10]-x[7]*x[11]-x[8]*x[11]-x[9]*x[11]; //V
-	posvel->r = rk*x[12]; //r
-	posvel->v = rDot*x[12]+rFDot*x[13]; //v
+	pos[0] = -x[1]*x[2]; //M[0]
+	pos[1] = x[0]*x[2]; //M[1]
+	pos[2] = x[3]; //M[2]
+	x[4] = x[0]; //N[0]
+	x[5] = x[1]; //N[1]
+	x[6] = 0;    //N[2]
+	x[7] = cos(uk); //cUK
+	x[8] = sin(uk); //sUK
+	pos2[0] = pos[0]*x[8]+x[4]*x[7]; //U
+	pos2[1] = pos[1]*x[8]+x[5]*x[7];
+	pos2[2] = pos[2]*x[8]+x[6]*x[7];
+	y[0][NPTS] = pos2[0]*rk;
+	y[1][NPTS] = pos2[1]*rk;
+	y[2][NPTS] = pos2[2]*rk;
 
 }
 
 
 
 
-void sgp(orbit_t orbit, double *tVec, int nPts, double y_r[3][nPts], double y_v[3][nPts], pos_vel *posvel){
+void sgp(orbit_t orbit, double *tVec, int nPts, float y_r[3][nPts]){
 
 
 	double eps = pow(2,-52);
@@ -147,9 +149,8 @@ void sgp(orbit_t orbit, double *tVec, int nPts, double y_r[3][nPts], double y_v[
 		double uK     = u    - 0.125*z*(7*pow(cI0,2) - 1)*sin2U;
 		double fK     = fS0  + 0.75 *z*cI0*sin2U;
 		double iK     = orbit.eqinc + 0.75 *z*sI0*cI0*cos2U;
-		rv( fK, iK, uK, rK, rDot, rFDot, posvel);
-		y_r[0][k] = posvel->r;
-		y_v[0][k] = posvel->v;
+		rv( fK, iK, uK, rK, rDot, rFDot, y_r);
+
 	}
 
 
