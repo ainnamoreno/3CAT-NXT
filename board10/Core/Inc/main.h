@@ -38,6 +38,11 @@ extern "C" {
 #include "sensorReadings.h"
 #include "definitions.h"
 
+#include "task_comms.h"
+#include "task_obc.h"
+#include "task_pl.h"
+#include "task_adcs.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

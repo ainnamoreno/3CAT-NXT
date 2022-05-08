@@ -83,10 +83,73 @@ void NMI_Handler(void)
 /**
   * @brief This function handles Hard fault interrupt.
   */
+void prvGetRegistersFromStack( uint32_t *pulFaultStackAddress )
+{
+/* These are volatile to try and prevent the compiler/linker optimising them
+away as the variables never actually get used.  If the debugger won't show the
+values of the variables, make them global my moving their declaration outside
+of this function. */
+volatile uint32_t r0;
+volatile uint32_t r1;
+volatile uint32_t r2;
+volatile uint32_t r3;
+volatile uint32_t r12;
+volatile uint32_t lr; /* Link register. */
+volatile uint32_t pc; /* Program counter. */
+volatile uint32_t psr;/* Program status register. */
+volatile uint32_t bfar, ufsr, ccr_reg, bfsr, cfsr, dfsr, afsr, hfsr, scb_shcsr;
+//The CFSR indicates the cause of a MemManage fault, BusFault, or UsageFault.
+
+
+    r0 = pulFaultStackAddress[ 0 ];
+    r1 = pulFaultStackAddress[ 1 ];
+    r2 = pulFaultStackAddress[ 2 ];
+    r3 = pulFaultStackAddress[ 3 ];
+
+    r12 = pulFaultStackAddress[ 4 ];
+    lr = pulFaultStackAddress[ 5 ];
+    pc = pulFaultStackAddress[ 6 ];
+    psr = pulFaultStackAddress[ 7 ];
+
+    ufsr = (*((volatile unsigned long *)(0xE000ED2A))); // UsageFault Status Register
+    ccr_reg =  (*((volatile unsigned long *)(0xE000ED14)));
+//    // Configurable Fault Status Register
+//      // Consists of MMSR, BFSR and UFSR
+//      _CFSR = (*((volatile unsigned long *)(0xE000ED28))) ;
+//
+//      // Hard Fault Status Register
+//      _HFSR = (*((volatile unsigned long *)(0xE000ED2C))) ;
+//
+//      // Debug Fault Status Register
+//      _DFSR = (*((volatile unsigned long *)(0xE000ED30))) ;
+//
+//      // Auxiliary Fault Status Register
+//      _AFSR = (*((volatile unsigned long *)(0xE000ED3C))) ;
+//
+//      // Read the Fault Address Registers. These may not contain valid values.
+//      // Check BFARVALID/MMARVALID to see if they are valid values
+//      // MemManage Fault Address Register
+//      _MMAR = (*((volatile unsigned long *)(0xE000ED34))) ;
+//      // Bus Fault Address Register
+//      _BFAR = (*((volatile unsigned long *)(0xE000ED38))) ;
+
+    /* When the following line is hit, the variables contain the register values. */
+    for( ;; );
+}
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+	__asm volatile
+	    (
+	        " tst lr, #4                                                \n"
+	        " ite eq                                                    \n"
+	        " mrseq r0, msp                                             \n"
+	        " mrsne r0, psp                                             \n"
+	        " ldr r1, [r0, #24]                                         \n"
+	        " ldr r2, handler2_address_const                            \n"
+	        " bx r2                                                     \n"
+	        " handler2_address_const: .word prvGetRegistersFromStack    \n"
+	    );
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -131,7 +194,10 @@ void BusFault_Handler(void)
 void UsageFault_Handler(void)
 {
   /* USER CODE BEGIN UsageFault_IRQn 0 */
+	uint32_t error_address;
+	error_address = (uint32_t *)(__get_MSP());  // load the current base address of the stack pointer
 
+	error_address = error_address + 6;       // Locate the PC value in the last stack frame
   /* USER CODE END UsageFault_IRQn 0 */
   while (1)
   {

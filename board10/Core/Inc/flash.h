@@ -41,11 +41,8 @@
 #define LOW_ADDR 					0x08008005
 #define CRITICAL_ADDR 				0x08008006
 #define EXIT_LOW_ADDR 				0x08008007
-#define PL_TIME_ADDR 				0x08008008 	//4 bytes
-#define SET_TIME_ADDR				0x0800800C 	//4 bytes
-#define RTC_TIME_ADDR				0x08008010	//4 bytes (COMMS Y PAYLOAD)
-#define PL_RF_TIME_ADDR				0x08008014	//8 bytes
-
+#define SET_TIME_ADDR				0x08008008 	//4 bytes (GS -> RTC)
+#define RTC_TIME_ADDR				0x0800800C	//4 bytes (RTC -> Unix) Get from the RTC
 //CONFIGURATION ADDRESSES
 #define CONFIG_ADDR 				0x08008010
 #define KP_ADDR 					0x08008010
@@ -59,15 +56,15 @@
 #define DELTA_F_ADDR 				0x0800801A
 #define INTEGRATION_TIME_ADDR 		0x0800801C
 
-#define TLE_ADDR 					0x08008020
+#define TLE_ADDR 					0x08008020 // 138 bytes
 //#define EXIT_LOW_POWER_FLAG_ADDR 	0x080080AA
 
 //CALIBRATION ADDRESSES
 #define CALIBRATION_ADDR			0x080080AB
-#define MAGNETO_MATRIX_ADDR			0x080080AB
-#define MAGNETO_OFFSET_ADDR			0x080080CF
-#define GYRO_POLYN_ADDR 			0x080080DB
-#define PHOTODIODES_OFFSET_ADDR 	0x080080F3
+#define MAGNETO_MATRIX_ADDR			0x080080AB // 35 bytes
+#define MAGNETO_OFFSET_ADDR			0x080080CF // 11 bytes
+#define GYRO_POLYN_ADDR 			0x080080DB // 23 bytes
+#define PHOTODIODES_OFFSET_ADDR 	0x080080F3 // 12 bytes
 
 //TELEMETRY ADDRESSES
 #define TELEMETRY_ADDR				0x08008100
@@ -76,11 +73,17 @@
 #define CURRENT_ADDR 				0x08008109
 #define BATT_LEVEL_ADDR 			0x0800810A
 
+//TIME ADDR
+#define PL_TIME_ADDR 				0x08008110 	//4 bytes (GS -> PAYLOAD CAMERA)
+#define PL_RF_TIME_ADDR				0x0800811C	//8 bytes (GS -> PAYLOAD RF)
+
 //COMMS CONFIGURATION ADDRESSES
 //TODO: How many bytes are needed for each one ?
 #define COUNT_PACKET_ADDR 			0x08008200
 #define COUNT_WINDOW_ADDR 			0x08008201
 #define COUNT_RTX_ADDR 				0x08008202
+
+
 
 uint32_t Flash_Write_Data (uint32_t StartSectorAddress, uint8_t *Data, uint16_t numberofbytes);
 

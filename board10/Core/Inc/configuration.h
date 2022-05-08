@@ -18,6 +18,7 @@
 #include "definitions.h"
 #include "flash.h"
 #include <time.h>
+#include <string.h>
 
 static const uint8_t GYRO_ADDR = 0x68 << 1; //gyroscope address, 0x68 or 0x69 depending on the SA0 pin
 static const uint8_t MAG_ADDR = 0x30 << 1; //magnetometer address
@@ -42,7 +43,7 @@ void heater(int state);
 /*Send a signal to a resistor to burn a wire and deploy COMMS Antenna
  *Check the switch to make sure the Antenna has been deployed properly
  *And write deployment_state = true in the EEPROM memory*/
-void deployment(I2C_HandleTypeDef *hi2c);
+void deployment(I2C_HandleTypeDef *hi2c, uint8_t nominal, uint8_t low, uint8_t critical);
 
 /*Send a signal to a resistor to burn a wire and deploy PL2 Antenna
  *Once confirmed the proper deployment of the antenna,  write deploymentRF_state = true in the EEPROM memory*/
@@ -57,8 +58,9 @@ void check_position(void);
 int system_state(I2C_HandleTypeDef *hi2c, uint8_t nominal, uint8_t low, uint8_t critical);
 
 /*Converts the RTC in Unix Time Format */
-void RTC_Time(RTC_TimeTypeDef *sTime, RTC_DateTypeDef *sDate);
-
+void HumanToUnixTime(RTC_HandleTypeDef *hrtc, uint32_t time32);
+/*Converts Unix Time Format to RTC Type */
+void UnixToHumanTime(uint32_t time, RTC_HandleTypeDef *hrtc);
 /* Different causes for a system reset*/
 typedef enum reset_cause_e
   {

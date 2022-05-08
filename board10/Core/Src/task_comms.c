@@ -7,7 +7,8 @@ void vCommsTask(void *pvParameters) {
 
 	for (;;) {
 		// Start their own statemachine
-		stateMachine();
+		// Passarli al state machine el signal_received -> PER PODER COMUNICAR LES FUNCIONS
+		// stateMachine();
 		// If GS_noti from ADCS -> change comms state machine to RX
 		// if process_telecommand = SET_TIME, we send the RTC to GS
 		// if Data_taken_noti (from payload_task) --> senddata() to GS

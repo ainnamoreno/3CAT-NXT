@@ -230,4 +230,3 @@ VP_SYS_VS_Systick.Signal=SYS_VS_Systick
 VP_WWDG_VS_WWDG.Mode=WWDG_Activate
 VP_WWDG_VS_WWDG.Signal=WWDG_VS_WWDG
 board=custom
-isbadioc=false

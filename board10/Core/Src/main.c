@@ -32,6 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define STACKSIZE  256
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -71,6 +72,13 @@ static void MX_USB_OTG_FS_HCD_Init(void);
 static void MX_IWDG_Init(void);
 static void MX_WWDG_Init(void);
 static void MX_RTC_Init(void);
+BaseType_t xCOMMS, xOBC, xADCS, xPL;
+	TaskHandle_t xHandleComms = NULL, xHandleOBC = NULL, xHandleADCS = NULL,
+			xHandlePL = NULL;
+	StackType_t xStackComms[STACKSIZE], xStackOBC[STACKSIZE],
+			xStackADCS[STACKSIZE], xStackPL[STACKSIZE];
+
+	StaticTask_t xCOMMSBuffer, xOBCBuffer, xADCSBuffer, xPLBuffer;
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -78,7 +86,6 @@ static void MX_RTC_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 /* USER CODE END 0 */
-
 /**
  * @brief  The application entry point.
  * @retval int
@@ -111,239 +118,81 @@ int main(void) {
 	MX_SPI1_Init();
 	MX_I2C1_Init();
 	MX_USB_OTG_FS_HCD_Init();
-	//MX_IWDG_Init();
+	MX_IWDG_Init();
 	//MX_WWDG_Init();
 	MX_RTC_Init();
 
+
+	/* USER CODE BEGIN 2 */
+	SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk
+	 | SCB_SHCSR_BUSFAULTENA_Msk
+	 | SCB_SHCSR_MEMFAULTENA_Msk; //enable Usage-/Bus-/MPU Fault
+	SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;
 	// MIRAR PERQUE FA EL RESET
 	reset_cause_t reset_cause = reset_cause_get();
-	/* USER CODE BEGIN 2 */
+	HAL_NVIC_SetPriorityGrouping( NVIC_PRIORITYGROUP_4 );
+	HAL_NVIC_EnableIRQ(UsageFault_IRQn);
+
 	/* USER CODE BEGIN Init */
 
 	// INITIALIZE SENSORS
 	initsensors(&hi2c1);
 
-	// RTC TEST
-		RTC_TimeTypeDef sTime = { 0 };
-		RTC_DateTypeDef sDate = { 0 };
-		HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-		HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-		// Save in RTC_TIME_ADDR
-		RTC_Time(&sTime, &sDate);
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
 
-	uint8_t currentState, exit_low, nominal, low, critical;
-	Write_Flash(CURRENT_STATE_ADDR, INIT, 1);
+	// RTC TEST -> OKEY
+	uint32_t time_rtc;
+	//HumanToUnixTime(&hrtc, time_rtc);
+	HAL_IWDG_Refresh(&hiwdg);
+	// Write the setTime -> OKEY
+	uint32_t time = 1650363908, time2;
+	UnixToHumanTime(time, &hrtc);
+	// See if the SetTime and SetDate are correct
+	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
-	Read_Flash(CURRENT_STATE_ADDR, &currentState, sizeof(currentState));
-
-	// Update the battery thresholds
-	Write_Flash(NOMINAL_ADDR, 90, sizeof(90));
-	Read_Flash(NOMINAL_ADDR, &nominal, sizeof(nominal));
-	Write_Flash(LOW_ADDR, 85, sizeof(85));
-	Read_Flash(LOW_ADDR, &low, sizeof(low));
-	Write_Flash(CRITICAL_ADDR, 80, sizeof(80));
-	Read_Flash(CRITICAL_ADDR, &critical, sizeof(critical));
+	//Create all the tasks
 
 
 
-	//Només les notis que farem cas amb un |
+//	xCOMMS = xTaskCreateStatic(vCommsTask, "Task COMMS",
+//	1000, /* Stack size in words, not bytes. */
+//	NULL, /* Parameter passed into the task. */
+//	tskIDLE_PRIORITY+1,/* Priority at which the task is created. */
+//	xStackComms, /* Array to use as the task's stack. */
+//	&xCOMMSBuffer); // Variable to hold the task's data structure.
 
-	// Signals related to NOTIFICATIONS
-	uint32_t signal_received,signal_to_wait;
-	uint32_t settime;
+	xOBC = xTaskCreateStatic(vOBCTask, "Task OBC",
+	(sizeof(xStackOBC)/sizeof(xStackOBC[0])), /* Stack size in words, not bytes. */
+	NULL, /* Parameter passed into the task. */
+	tskIDLE_PRIORITY,/* Priority at which the task is created. */
+	xStackOBC, /* Array to use as the task's stack. */
+	&xOBCBuffer); /* Used to pass out the created task's handle. */
+
+//	xADCS = xTaskCreateStatic(vADCSTask, "Task ADCS",
+//	1000, /* Stack size in words, not bytes. */
+//	(void*) 1, /* Parameter passed into the task. */
+//	tskIDLE_PRIORITY+2,/* Priority at which the task is created. */
+//	xStackADCS, /* Array to use as the task's stack. */
+//	&xADCSBuffer); /* Used to pass out the created task's handle. */
+//
+//	xPL = xTaskCreateStatic(vPayloadTask, "Task PAYLOAD",
+//	1000, /* Stack size in words, not bytes. */
+//	(void*) 1, /* Parameter passed into the task. */
+//	tskIDLE_PRIORITY+3,/* Priority at which the task is created. */
+//	xStackPL, /* Array to use as the task's stack. */
+//	&xPLBuffer); /* Used to pass out the created task's handle. */
+
+	// If tasks have been correctly created
+	//StartScheduler
+	vTaskStartScheduler();
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
-		//system_state(&hi2c1);
-
-		//Look for a new notification
-		if (xTaskNotifyWait(0, signal_to_wait, &signal_received,
-				portMAX_DELAY) == pdTRUE) {
-			if (signal_received & NOMINAL_NOTI) {
-				//If GS changed the NOMINAL thereshold
-				Read_Flash(NOMINAL_ADDR, &nominal, sizeof(nominal));
-			}
-			if (signal_received & LOW_NOTI) {
-				//If GS changed the LOW thereshold
-				Read_Flash(LOW_ADDR, &low, sizeof(low));
-			}
-			if (signal_received & CRITICAL_NOTI) {
-				//If GS changed the CRITICAL thereshold
-				Read_Flash(CRITICAL_ADDR, &critical, sizeof(critical));
-			}
-			if (signal_received & SETTIME_NOTI) {
-				//If GS send TIME
-				Read_Flash(SET_TIME_ADDR, &settime, sizeof(critical));
-			}
-			if (signal_received & GS_NOTI) {
-				//If contact region with GS -> NOTIFY COMMS
-				xTaskNotify("Task COMMS", GS_NOTI, eSetBits);
-			}
-		}
-
-		switch (currentState) {
-
-		case CHECK:
-			/* State that periodically checks the satellite general state (batteries,
-			 * temperatures, voltages...
-			 * From this state the satellite can go to contingency states
-			 * if systemstate() returns a value different than 0 */
-
-			// It is only done the first time we enter to IDLE
-			// We send notifications to COMMS, ADCS tasks to start tunning (IDLE_State_noti)
-			if (system_state(&hi2c1,nominal,low,critical) > 0) {
-				currentState = CONTINGENCY;
-				// Actualitzem l'estat només si canviem d'estat
-				Write_Flash(PREVIOUS_STATE_ADDR, CHECK, 1);
-				Write_Flash(CURRENT_STATE_ADDR, currentState,
-						sizeof(currentState));
-			} else {
-				sensorReadings(&hi2c1); /*Updates the values of temperatures, voltages and currents*/
-			}
-			break;
-
-//		case COMMS:	// This might refer ONLY refer to TX!!!
-//			// Creem un fil on ens comunicarem simultaneament amb el GS
-//			// configuration();
-//			// pthread_create(&thread_comms, NULL, stateMachine(), NULL);
-//			xTaskCreate("nomdelafuncio", 'nomdelatasca=commstask', 'StackDepth = 100', '', 'Priority = 0', pxCreatedTask)
-//			// check if the picture or spectrogram has to be sent and send it if needed
-//			if(system_state(&hi2c1)>0) currentState = CONTINGENCY;
-//			else if(comms_state);
-//				if(telecommand()) // function that receives orders from "COMMS" si true --> tornem a IDLE
-//			// Si no rebem cap ordre, enviem telemetria -->
-//					process_telecommand(SENDTELEMETRY,0);  //Aviso a COMMS que envii telemetry
-//
-//			// Una vegada ens hem comunicat amb COMMS, tornem a IDLE
-//			// comms_state = false;
-//			// No hauriem de fer un write?
-//			Write_Flash(COMMS_STATE_ADDR, FALSE, 1);
-//			currentState = IDLE;
-//			Write_Flash(PREVIOUS_STATE_ADDR, COMMS, 1);
-//			break;
-//		case PAYLOAD:
-//			if(system_state(&hi2c1)>0) currentState = CONTINGENCY;
-//			/* The idea of this state is to start a new thread which starts the following function:
-//			 * make the camera point to Earth (ADCS), when it reaches the final position
-//			 * wait until it's time to take the photo
-//			 * Meanwhile the main thread returns to IDLE, so it can't continue checking the
-//			 * batteries, temperature, etc */
-//
-//			// Create a secondary thread (antenna_pointing + waits to takePhoto) -> vTaskPayload
-//			// Main thread --> Back to IDLE
-//			Write_Flash(PAYLOAD_STATE_ADDR, FALSE, 1);
-//			currentState = IDLE;
-//			Write_Flash(PREVIOUS_STATE_ADDR, PAYLOAD, 1);
-//			break;
-
-		case CONTINGENCY:
-			/*Turn STM32 to Stop Mode or Standby Mode
-			 *Loop to check at what batterylevel are we
-			 *Out of CONTINGENCY State when batterylevel is NOMINAL
-			 */
-			// TODO: LOW POWER RUN MODE (De momento podriem fer un SleepMode)
-			// Avisar a COMMS que entrem en CONTINGENCY (enviar paquet de telemetria)
-			// S'envia cada vegada que rebem un EXITLOWPOWER_NOTI i la bateria no millora
-			xTaskNotify("Task COMMS", CONTINGENCY_NOTI, eSetBits);
-
-			// Esperem que COMMS rebi telecommand de la GS (EXITLOWPOWER_NOTI)
-			if (xTaskNotifyWait(0, signal_to_wait, &signal_received,
-					portMAX_DELAY) == pdTRUE) {
-				if (signal_received & EXITLOWPOWER_NOTI) {
-					// Mirem el nivell de bateria
-					// Si ha empitjorat
-					if (system_state(&hi2c1,nominal,low,critical) > 1) {
-						currentState = SUNSAFE;
-						// Actualitzem l'estat només si canviem d'estat
-						Write_Flash(PREVIOUS_STATE_ADDR, CONTINGENCY, 1);
-						Write_Flash(CURRENT_STATE_ADDR, currentState,
-								sizeof(currentState));
-
-						// Si ha millorat
-					} else if (system_state(&hi2c1,nominal,low,critical) == 0) {
-						/*Return to Run Mode*/
-						currentState = CHECK;
-						// Actualitzem l'estat només si canviem d'estat
-						Write_Flash(PREVIOUS_STATE_ADDR, CONTINGENCY, 1);
-						Write_Flash(CURRENT_STATE_ADDR, currentState,
-								sizeof(currentState));
-					}
-				}
-			}
-
-			// Una opció és fer reset total del satelit quan surti de contingency
-
-			break;
-
-		case SUNSAFE:
-			Write_Flash(PREVIOUS_STATE_ADDR, SUNSAFE, 1);
-			// Entrem en el SleepMode
-			// HAL_PWR_EnterSLEEPMode();
-
-			// IWDG initialize
-			// HAL_Delay(30000);
-			// Refresh IWDG to avoid reseting the system
-			HAL_IWDG_Refresh(&hiwdg);
-			// IWDG ens permet sortir del SleepMode automaticament
-			// Mirem si ha millorat o empitjorat la bateria
-			// system_state = 3 --> battery level < CRITICAL
-			if (system_state(&hi2c1,nominal,low,critical) == 3) {
-				currentState = SURVIVAL;
-				// Actualitzem l'estat només si canviem d'estat
-				Write_Flash(PREVIOUS_STATE_ADDR, SUNSAFE, 1);
-				Write_Flash(CURRENT_STATE_ADDR, currentState,
-						sizeof(currentState));
-
-				// system_state = 1 --> LOW < battery level < NOMINAL
-			} else if (system_state(&hi2c1,nominal,low,critical) == 1) {
-				/*Return to Run Mode*/
-				currentState = CONTINGENCY;
-				// Actualitzem l'estat només si canviem d'estat
-				Write_Flash(PREVIOUS_STATE_ADDR, SUNSAFE, 1);
-				Write_Flash(CURRENT_STATE_ADDR, currentState,
-						sizeof(currentState));
-			}
-			break;
-
-		case SURVIVAL:
-			// Anar a mode Low Power Sleep Mode
-			// Necessitem el IDWD
-			// Refresh IWDG to avoid reseting the system
-			HAL_IWDG_Refresh(&hiwdg);
-			// Només podem anar a CONTINGENCY
-			if (system_state(&hi2c1,nominal,low,critical) == 1) {
-				currentState = CONTINGENCY;
-				// Actualitzem l'estat només si canviem d'estat
-				Write_Flash(PREVIOUS_STATE_ADDR, SURVIVAL, 1);
-				Write_Flash(CURRENT_STATE_ADDR, currentState,
-						sizeof(currentState));
-			}
-
-			break;
-
-		case INIT:
-			init(&hi2c1);
-			Write_Flash(PREVIOUS_STATE_ADDR, INIT, 1);
-			Read_Flash(CURRENT_STATE_ADDR, &currentState, sizeof(currentState));
-			// Wake up COMMS and ADCS tasks
-			xTaskNotify("Task ADCS", DONEPHOTO_NOTI, eSetBits);
-			xTaskNotify("Task COMMS", DONEPHOTO_NOTI, eSetBits);
-			// Send notification to ADCS --> DETUMBLING_NOTI
-			//xTaskNotify("Task ADCS", DETUMBLING_NOTI, eSetBits);
-
-			break;
-			/*If we reach this state something has gone wrong*/
-		default:
-			/*REBOOT THE SYSTEM*/
-			break;
-		}
-
-		/*Start a TIMER*/
-
-//	    return 0;
-		//todo variable que conti ticks rellotge per fer reset
+		HAL_IWDG_Refresh(&hiwdg);
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
@@ -490,7 +339,7 @@ static void MX_IWDG_Init(void) {
 
 	/* USER CODE END IWDG_Init 1 */
 	hiwdg.Instance = IWDG;
-	hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
+	hiwdg.Init.Prescaler = IWDG_PRESCALER_256;
 	hiwdg.Init.Reload = 4095;
 	if (HAL_IWDG_Init(&hiwdg) != HAL_OK) {
 		Error_Handler();

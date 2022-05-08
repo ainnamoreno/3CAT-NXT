@@ -198,8 +198,9 @@ uint32_t Flash_Write_Data(uint32_t StartSectorAddress, uint8_t *Data,
 
 	uint32_t FirstAddr = GetFirstAddress(StartSector);
 	uint32_t Addr = FirstAddr;
-	uint32_t LastAddr = GetFirstAddress(StartSector+1);
-	uint8_t DataSave[PAGE_SIZE] = {0};
+	uint32_t N_ADDR = 50;
+	uint32_t LastAddr = FirstAddr+N_ADDR;
+	uint8_t DataSave[PAGE_SIZE];
 	uint8_t i = 0,j=0;
 	while(Addr < LastAddr){
 		/* Verify if Addr is the Address where we want to write */
@@ -248,7 +249,7 @@ uint32_t Flash_Write_Data(uint32_t StartSectorAddress, uint8_t *Data,
 //		}
 //	}
 
-	while (sofar < PAGE_SIZE) {
+	while (sofar < N_ADDR) {
 		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, FirstAddr,
 				DataSave[sofar]) == HAL_OK) {
 			FirstAddr += 1; // use StartPageAddress += 2 for half word and 8 for double word

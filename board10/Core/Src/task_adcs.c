@@ -14,7 +14,7 @@ void vADCSTask(void *pvParameters) {
 
 	for (;;) {
 		// Constantly checking the sat position
-		checkposition();
+		// checkposition();
 
 		// if in the contact region
 		// xTaskNotify(OBC_task, GS_NOTI, eSetBits)

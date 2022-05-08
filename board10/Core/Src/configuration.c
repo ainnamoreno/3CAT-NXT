@@ -54,13 +54,12 @@ void checkbatteries(I2C_HandleTypeDef *hi2c) {
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void deployment(I2C_HandleTypeDef *hi2c) {
+void deployment(I2C_HandleTypeDef *hi2c, uint8_t nominal, uint8_t low, uint8_t critical) {
 	bool deployment = false;
-	uint8_t nominal, low, critical;
 	Read_Flash(NOMINAL_ADDR, &nominal, sizeof(nominal));
 	Read_Flash(LOW_ADDR, &low, sizeof(low));
 	Read_Flash(CRITICAL_ADDR, &critical, sizeof(critical));
-	while (system_state(&hi2c,nominal,low,critical) == 0) {
+	if (system_state(&hi2c,nominal,low,critical) == 0) {
 		/*Give high voltage to the resistor to burn the wire, TBD TIME AND VOLTAGE*/
 	}
 	deployment = true;
@@ -126,9 +125,9 @@ void init(I2C_HandleTypeDef *hi2c) {
 	if (system_state(&hi2c,nominal,low,critical)>0)
 		currentStateinit = CONTINGENCY;
 	else {
-		// If we the deployment is not done yet
+		// If the deployment is not done yet
 		if (!deployment_state)
-			deployment(&hi2c);
+			deployment(&hi2c,nominal,low,critical);
 		//Just in the PocketQube with the RF antenna
 		if (!deploymentRF_state)
 			deploymentRF(&hi2c);
@@ -197,6 +196,7 @@ int system_state(I2C_HandleTypeDef *hi2c, uint8_t nominal, uint8_t low, uint8_t 
 	if (!checktemperature(hi2c)) /*rotate_satellite*/
 	{
 		//NOTIFY ADCS --> ROTATE_NOTI
+		xTaskNotify("Task ADCS", ROTATE_NOTI, eSetBits);
 	}
 
 	checkbatteries(hi2c);
@@ -295,44 +295,88 @@ void heater(int state) {
 }
 
 /**************************************************************************************
- *                                                                                    *
- * Function:  PL_Time                                            	  		  		  *
- * --------------------                                                               *
- * Converts the time in Unix Format and returns it in a variable time_t			      *
- *																					  *
- *  hrtc: RTC to read from the date and time			    				      *
- *															                          *
- *  returns: timestamp with the time in unix format								      *
- *  		 																		  *
+ *                                                                                    	*
+ * Function:  HumanToUnixTime                                          	  		  	  	*
+ * --------------------                                                               	*
+ *  Read the actual time with the RTC and converts the time in Unix Format				*
+ *  Saves the time in a uint32_t variable. This function will be used only in the 		*
+ *  Payload Camera Task																	*
+ *																					  	*
+ *  hrtc: RTC to read from the date and time			    				      		*
+ *															                          	*
+ *  returns: nothing							      									*
+ *  		 																		  	*
  **************************************************************************************/
-void RTC_Time(RTC_TimeTypeDef *sTime, RTC_DateTypeDef *sDate) {
+void HumanToUnixTime(RTC_HandleTypeDef *hrtc, uint32_t time32) {
 	//Get the time and date
-//	RTC_TimeTypeDef sTime = { 0 };
-//	RTC_DateTypeDef sDate = { 0 };
-//	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-//	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-	//Make the conversion
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
+	HAL_RTC_GetTime(hrtc, &sTime, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(hrtc, &sDate, RTC_FORMAT_BIN);
+
+	//Make the conversion from RTC Type to struct tm
 	//January and February are counted as months 13 and 14 of the previous year
 	time_t timestamp;
 	struct tm currTime;
-	currTime.tm_year = sDate->Year + 100;
-    currTime.tm_mon = sDate->Month-1;
-    currTime.tm_mday = sDate->Date;
-	currTime.tm_hour = sTime->Hours-1;
-    currTime.tm_min = sTime->Minutes;
-    currTime.tm_sec = sTime->Seconds;
+	currTime.tm_year = sDate.Year + 100;
+    currTime.tm_mon = sDate.Month-1;
+    currTime.tm_mday = sDate.Date;
+	currTime.tm_hour = sTime.Hours-1;
+    currTime.tm_min = sTime.Minutes;
+    currTime.tm_sec = sTime.Seconds;
 
+    // Convert from struct tm to time_t
     timestamp = mktime(&currTime);
-    uint32_t ttt = (uint32_t)timestamp;
-    uint8_t data[4] = {0};
-    memcpy(data, &ttt, sizeof(ttt));
-    Write_Flash(RTC_TIME_ADDR, data, sizeof(data));
+
+    // Convert from time_t to uint32_t
+    time32 = (uint32_t)timestamp;
+
+    // Converts uint32_t to uint8_t[4]
+    uint8_t data[4];
+    memcpy(data, &time32, sizeof(time32));
+
+    // Saves the Time in Unix format in the ADDR
+    Write_Flash(SET_TIME_ADDR, &data, sizeof(data));
+    // TEST
     uint32_t timeread;
-    Read_Flash(RTC_TIME_ADDR, &timeread, 4);
+    Read_Flash(SET_TIME_ADDR, &timeread, sizeof(timeread));
 }
 
+/**************************************************************************************
+ *                                                                                    *
+ * Function:  UnixToHumanTime                                            	  		  *
+ * --------------------                                                               *
+ * Converts the time from Unix Format to Human Readable Date, writes the time 		  *
+ * (unix format) in the corresponding ADDR and makes an RTC_SetTime and RTC_SetDate	  *
+ *																					  *
+ *  hrtc: RTC to read from the date and time
+ *  settime: The time in Unix format send by the GS			    				      *
+ *															                          *
+ *  returns: nothing							      									*
+ *  		 																		  *
+ **************************************************************************************/
+void UnixToHumanTime(uint32_t settime, RTC_HandleTypeDef *hrtc) {
+	time_t unix = settime;
+	struct tm currTime;
+	localtime_r(&unix, &currTime);
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
 
+	// Converts tm struct to RTC_TimeTypeDef, RTC_DateTypeDef
+	sDate.Year = currTime.tm_year - 100;
+	sDate.Month = currTime.tm_mon +1;
+	sDate.Date = currTime.tm_mday;
+	sTime.Hours= currTime.tm_hour + 1;
+	sTime.Minutes = currTime.tm_min;
+	sTime.Seconds = currTime.tm_sec;
 
+	// Writes in the memory ADDR -> DONE BY COMMS
+    // Write_Flash(RTC_TIME_ADDR, &settime, sizeof(settime));
+
+    // Sets the new Time and Date
+    HAL_RTC_SetTime(hrtc, &sTime, RTC_FORMAT_BIN);
+    HAL_RTC_SetDate(hrtc, &sDate, RTC_FORMAT_BIN);
+}
 
   /// @brief      Obtain the STM32 system reset cause
   /// @param      None

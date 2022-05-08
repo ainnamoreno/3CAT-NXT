@@ -23,7 +23,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "utils.h"
-#include "eeprom.h"
+
 
 /*Temperature range operation of STM32L162VE*/
 #define TEMP_MIN -40

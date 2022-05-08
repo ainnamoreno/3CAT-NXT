@@ -15,26 +15,26 @@ void vPayloadTask(void *pvParameters) {
 
 
 	// signal to wait son les possibles senyals que podem rebre
-	uint32_t signal_to_wait = 0;
+	uint32_t signal_to_wait = WAKEUP_NOTI | POINTING_DONE_NOTI | CONTINGENCY_NOTI;
 	uint32_t signal_received = 0;
 
 	for (;;) {
-		// Esperar 1a notificació a COMMS fer foto
+		// Wait for Wake up notification
 
 		if (xTaskNotifyWait(0, signal_to_wait, &signal_received,portMAX_DELAY) == pdTRUE) {
-			if (signal_received & TAKEPHOTO_NOTI) {
-				// Inicialitzar la camara (activar PIN VCC)
+			if (signal_received & WAKEUP_NOTI) {
+				// Initialize the Camera (SWITCH/PIN VCC)
 
-				// Read from memory the time to use the payload (Exact time)
+				// Read from memory the when to take the photo
 				Read_Flash(PL_TIME_ADDR, &payload_time, sizeof(payload_time));
-				// Esperar 2a notificació a que ADCS estigui apuntant
+				// Wait for ADCS to point
 				if (xTaskNotifyWait(0, signal_to_wait, &signal_received,
 				portMAX_DELAY) == pdTRUE) {
 					if (signal_received & POINTING_NOTI) {
-						// Wait until the times coincide
+						// Wait until the it's time
 						do {
-							//RTC
-							realTime_int = PL_Time(&hrtc);
+							// Check real time
+							HumanToUnixTime(&hrtc, realTime_int);
 
 						} while (payload_time > realTime_int);
 
@@ -42,14 +42,15 @@ void vPayloadTask(void *pvParameters) {
 						while (!takePhoto(&huart1))
 							;
 						// resetCommsParams();
+						// If photo has been taken correctly:
+						xTaskNotify("Task OBC", DONEPHOTO_NOTI, eSetBits);
 
-						// xTaskNotify("Task OBC", DONEPHOTO_NOTI, eSetBits);
-						// Apagar la PAYLOAD
+						// Turn off the CAMERA
 					}
 				}
 			}
 			if (signal_received & CONTINGENCY_NOTI) {
-				vDeleteTask();
+				// vDeleteTask();
 			}
 
 		}
