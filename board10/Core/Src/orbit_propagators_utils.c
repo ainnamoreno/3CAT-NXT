@@ -27,13 +27,6 @@
 #define M2KM 1/1000
 #define KM2M 1000
 
-int sign(double a){
-    if(a < 0.0)
-        return -1;
-    if(a > 0.0)
-        return 1;
-    return 0;
-}
 /* 3 element vector operations */
 void zero_vec3(vec3 *res){
     res->raw[0] = 0;

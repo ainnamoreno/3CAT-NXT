@@ -236,7 +236,7 @@ void AngularVelocity(I2C_HandleTypeDef *hi2c1, double *w){
  *  returns: Nothing									                              *
  *                                                                                    *
  **************************************************************************************/
-void readPhotodiodes(ADC_HandleTypeDef *hadc, uint32_t photoData[6]) { // I think the four ADC should be passed as parameters
+void readPhotodiodes(ADC_HandleTypeDef *hadc, uint32_t *photoData) { // I think the four ADC should be passed as parameters
 
 	uint32_t data[6];
 	double conversionValue = 3.3/pow(2,14);
@@ -286,6 +286,24 @@ void readPhotodiodes(ADC_HandleTypeDef *hadc, uint32_t photoData[6]) { // I thin
 
 
 
+
+}
+
+void sunVector(ADC_HandleTypeDef *hadc, uint32_t *sunvector){
+
+	uint32_t *photodiodesData;
+	//get the vector containing the data from the photodiodes
+	readPhotodiodes(&hadc, photodiodesData);
+	//compute the sunvector
+	//if the photodiodesData[0], which is the positive X side, is > than photodiodesData[3]
+	//which is the negative X side, we obtain the value of the photodiodesData[0]
+	//as the voltage received is much bigger and this will let us know the position of the sun
+	if(photodiodesData[0]>photodiodesData[3]) sunvector[0] = photodiodesData[0];
+	else sunvector[0] = -photodiodesData[3];
+	if(photodiodesData[1]>photodiodesData[4]) sunvector[1] = photodiodesData[1];
+	else sunvector[1] = -photodiodesData[4];
+	if(photodiodesData[2]>photodiodesData[5]) sunvector[2] = photodiodesData[2];
+	else sunvector[2] = -photodiodesData[5];
 
 }
 
@@ -530,6 +548,7 @@ void sensorData(I2C_HandleTypeDef *hi2c1, ADC_HandleTypeDef *hadc, mag_data *mag
 	sunVector->z2 = data[5];
 
 }
+
 
 
 

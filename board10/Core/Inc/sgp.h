@@ -11,40 +11,34 @@
 typedef struct __attribute__ ((__packed__)) orbit_t {
 	int ep_year;
 	long norb;
-	double ep_day;
-	double bstar;
-	double eqinc;
-	double ascn;
-	double ecc;
-	double argp;
-	double mnan;
-	double rev;
+	float ep_day;
+	float bstar;
+	float eqinc;
+	float ascn;
+	float ecc;
+	float argp;
+	float mnan;
+	float rev;
 	long satno;
-	double n0Dot;
-	double n0DDot;
+	float n0Dot;
+	float n0DDot;
 
 }orbit_t;
 
 
-typedef struct __attribute__ ((__packed__)) pos_vel {
-
-	double r;
-	double v;
-
-}pos_vel;
 
 
-double FMod2Pi(double x);
 
-double* linspace(double x1, double x2, int n);
+float FMod2Pi(float x);
 
-void sgp(orbit_t orbit, double *tVec, int nPts, float y_r[3][nPts]);
+float* linspace(float x1, float x2, int n);
 
-int sign(double x);
+void sgp(orbit_t orbit, float *tVec, int nPts, float *x, float *y, float *z);
 
-double kepler(double u, double aYNSL, double aXNSL, double tol );
+int sign(float x);
 
-void rv(float fk, float ik, float uk, float rk, float rDot, float rFDot, float y[3][100]);
+float kepler(float u, float aYNSL, float aXNSL, float tol );
+
 
 
 

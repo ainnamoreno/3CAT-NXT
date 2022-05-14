@@ -28,10 +28,15 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-
+#include "stm32f4xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "payload_camera.h"
+#include "comms.h"
+#include "configuration.h"
+#include "sensorReadings.h"
+#include "definitions.h"
 
 /* USER CODE END Includes */
 
@@ -67,3 +72,5 @@ void Error_Handler(void);
 #endif
 
 #endif /* __MAIN_H */
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
