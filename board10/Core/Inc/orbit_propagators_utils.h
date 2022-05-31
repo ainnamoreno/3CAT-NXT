@@ -66,6 +66,15 @@ typedef union __attribute__ ((__packed__)) _vec3{
     }f;
 }vec3;
 
+typedef union __attribute__ ((__packed__)) _xyz_t{
+
+        double x;
+        double y;
+        double z;
+
+}xyz_t;
+
+
 typedef union __attribute__ ((__packed__)) _mat3{
     double raw[3][3];
     struct __attribute__ ((__packed__)) {

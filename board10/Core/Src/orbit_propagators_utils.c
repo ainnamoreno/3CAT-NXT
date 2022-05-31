@@ -534,33 +534,24 @@ void greenwidtchtime(double jd, double *gst)
     (*gst) = temp;
 }
 
-//int sat_position_eci(double jd_actual, vec3 *position_eci, vec3 *velocity_eci)
-//{
-//    xyz_t pos, vel;
-//    int error;
-//
-//    error = satpos_xyz(jd_actual, &pos, &vel);
-//
-//    position_eci->raw[0] = pos.x; /* Position in km's */
-//    position_eci->raw[1] = pos.y;
-//    position_eci->raw[2] = pos.z;
-//
-//    velocity_eci->raw[0] = vel.x; /* Velocity in km/s */
-//    velocity_eci->raw[1] = vel.y;
-//    velocity_eci->raw[2] = vel.z;
-//
-//    return error;
-//}
-//
-//void propagate_orbit(orbit_t *orbit_definition, double jd_actual, vec3 *sat_pos, vec3 *sat_vel)
-//{
-//    vec3 pos_eci, vel_eci;
-//    if(init_sgdp4(orbit_definition) != SGDP4_ERROR) {
-//        sat_position_eci(jd_actual, &pos_eci, &vel_eci);
-//        mult_vec3_scalar(pos_eci, KM2M, sat_pos);
-//        mult_vec3_scalar(vel_eci, KM2M, sat_vel);
-//    }
-//}
+int sat_position_eci(double jd_actual, vec3 *position_eci, vec3 *velocity_eci)
+{
+    xyz_t pos, vel;
+    int error;
+
+    error = satpos_xyz(jd_actual, &pos, &vel);
+
+    position_eci->raw[0] = pos.x; /* Position in km's */
+    position_eci->raw[1] = pos.y;
+    position_eci->raw[2] = pos.z;
+
+    velocity_eci->raw[0] = vel.x; /* Velocity in km/s */
+    velocity_eci->raw[1] = vel.y;
+    velocity_eci->raw[2] = vel.z;
+
+    return error;
+}
+
 
 
 void solar_position_algorithm(double julian_day, vec3 pos_llh, vec3 *sun_pos_eci)

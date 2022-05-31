@@ -27,16 +27,17 @@ static double d_read(char *str, int start, int stop);
    next elements of whatever sort.
    ==================================================================== */
 
-int read_twoline(char line1[ST_SIZE], char line2[ST_SIZE], long search_satno, orbit_t *orb)
+int read_twoline(tle_data tle, orbit_t *orb)
 {
+	long search_satno;
     static char search_with_0[ST_SIZE];
     static char search_without_0[ST_SIZE];
 
     char *st1, *st2;
     double bm, bx, cm, cx;
 
-    st1 = line1;
-    st2 = line2;
+    st1 = tle.line1;
+    st2 = tle.line2;
 
     search_satno = atol(st1+2);
 

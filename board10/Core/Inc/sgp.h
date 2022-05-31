@@ -7,6 +7,7 @@
 
 #ifndef INC_SGP_H_
 #define INC_SGP_H_
+#define ST_SIZE 256
 
 typedef struct __attribute__ ((__packed__)) orbit_t {
 	int ep_year;
@@ -25,7 +26,11 @@ typedef struct __attribute__ ((__packed__)) orbit_t {
 
 }orbit_t;
 
+typedef struct __attribute__ ((__packed__)) tle_data {
+	char line1[ST_SIZE];
+	char line2[ST_SIZE];
 
+}tle_data;
 
 
 
@@ -33,12 +38,15 @@ float FMod2Pi(float x);
 
 float* linspace(float x1, float x2, int n);
 
-void sgp(orbit_t orbit, float *tVec, int nPts, float *x, float *y, float *z);
+void sgp(orbit_t orbit, int nPts, float *xvel, float *yvel, float *zvel,float *xcoord, float *ycoord, float *zcoord, float actualunixtime);
 
 int sign(float x);
 
 float kepler(float u, float aYNSL, float aXNSL, float tol );
 
+int checkposition(orbit_t orbit, int nPts, float actualunixtime, float latmax, float latmin, float lonmax, float lonmin);
+
+void updateTLE(tle_data *tle);
 
 
 

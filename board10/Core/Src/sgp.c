@@ -9,6 +9,13 @@
 #include "sgp.h"
 #include "math.h"
 #include "satutl.h"
+#include "flash.h"
+#define ST_SIZE 256
+
+
+#define PI 3.14159265358979323846
+#define asind(x) (asin( x ) / PI * 180)
+#define atan2d(x,y) (atan2(x,y) / PI * 180)
 
 
 int sign(float a){
@@ -65,41 +72,51 @@ float kepler(float u, float aYNSL, float aXNSL, float tol ){
 	return ePW;
 }
 
+void updateTLE(tle_data *tle){
+
+	uint8_t data[141];
+	//TLE address = 0x08008020
+	//read the data from the TLE
+	Read_Flash(0x08008020, data, 141);
+	//assignt the first 69 characters(the first TLE line) to the first line
+	memcpy(tle->line1, data, 69);
+	//assignt the last 69 characters(the second TLE line) to the second line
+	for(int i = 70; i<138; i++){
+
+		tle->line2[i] = data[i];
+	}
+
+}
 
 
 
+void sgp(orbit_t orbit, int nPts, float *xvel, float *yvel, float *zvel,float *xcoord, float *ycoord, float *zcoord, float actualunixtime){
 
-void sgp(orbit_t orbit, float *tVec, int nPts, float *x, float *y, float *z){
-
-
+	tle_data tle;
+	read_twoline(tle, &orbit);
+    float x[nPts], y[nPts], z[nPts], vx[nPts], vy[nPts], vz[nPts];
     float p, fS0, wS0, LS, aYNSL, a, dT, aXNSL, L, e, cI0, sI0, e0Sq, a1, d1, a0, p0, q0, L0, aux, dFDT, dWDT, tol, cf, sf, ci, si, cuk, suk;
     float pos[3], pos2[3], pos3[3];
-    float orbit_eqinc = 0.901282789742116;
-    float orbit_ecc = 1.011000000000000e-04;
-    float orbit_rev = 0.068238005150227;
-    float orbit_mnan =0.646166267648853;
-    float orbit_argp = 0.440203453279506;
-    float orbit_ascn = 4.118814719086182;
-    float orbit_n0Dot = 2.85176497485150e-09;
-    float orbit_n0DDot = 0;
+    float vel[3];
+    float *tVec;
     float eps = powf(2,-52);
 	float kE = 0.0743669161;
 	float aE = 1.0;
 	float j2 = 1.082616e-3;
 	float j3 = -0.253881e-5;
 	float twoThirds = 2.0/3.0;
-	tVec = linspace(0,60,100);
+	tVec = linspace(actualunixtime/60,(actualunixtime+1)/60,nPts);
 	// Values independent of time since epoch
-	cI0  = cos(orbit_eqinc);
-	sI0  = sin(orbit_eqinc);
-	e0Sq = powf(orbit_ecc,2);
-	a1   = pow((kE/orbit_rev),twoThirds);
+	cI0  = cos(orbit.eqinc);
+	sI0  = sin(orbit.eqinc);
+	e0Sq = powf(orbit.ecc,2);
+	a1   = pow((kE/orbit.rev),twoThirds);
 	d1   = 0.75*j2*powf((aE/a1),2)*(3*powf(cI0,2) - 1)/powf(1 - e0Sq, 1.5);
 	a0   = a1*(1 - d1/3 - powf(d1,2) - (134/81)*powf(d1,3));
 	p0   = a0*(1 - e0Sq);
-	q0   = a0*(1 - orbit_ecc);
-	L0   = orbit_mnan + orbit_argp + orbit_ascn;
-	aux    = 3*j2*powf(aE/p0,2)*orbit_rev;
+	q0   = a0*(1 - orbit.ecc);
+	L0   = orbit.mnan + orbit.argp + orbit.ascn;
+	aux    = 3*j2*powf(aE/p0,2)*orbit.rev;
 	dFDT = -aux*cI0/2;
 	dWDT =  aux*(5*powf(cI0,2) - 1)/4;
 	tol  = eps;
@@ -107,16 +124,16 @@ void sgp(orbit_t orbit, float *tVec, int nPts, float *x, float *y, float *z){
 
 	for(int k = 0; k<nPts; k++){
 		dT = tVec[k];
-		a = a0*powf((orbit_rev/(orbit_rev + (2*orbit_n0Dot + 3*orbit_n0DDot*dT)*dT)),twoThirds);
+		a = a0*powf((orbit.rev/(orbit.rev + (2*orbit.n0Dot + 3*orbit.n0DDot*dT)*dT)),twoThirds);
 		if( a > q0 ){
 			e = 1 - q0/a;
 		}else{
 			e = 1e-6;
 		}
 		p     = a*(1 - powf(e,2));
-		fS0   = orbit_ascn + dFDT*dT;
-		wS0   = orbit_argp + dWDT*dT;
-		LS    = L0 + (orbit_rev + dWDT + dFDT)*dT + powf(orbit_n0Dot*dT,2) + powf(orbit_n0DDot*dT,3);
+		fS0   = orbit.ascn + dFDT*dT;
+		wS0   = orbit.argp + dWDT*dT;
+		LS    = L0 + (orbit.rev + dWDT + dFDT)*dT + powf(orbit.n0Dot*dT,2) + powf(orbit.n0DDot*dT,3);
 		aux     = 0.5*(j3/j2)*aE*sI0/p;
 		aYNSL = e*sin(wS0) - aux;
 		aXNSL = e*cos(wS0);
@@ -143,7 +160,7 @@ void sgp(orbit_t orbit, float *tVec, int nPts, float *x, float *y, float *z){
 		rK     = r    + 0.25 *aux*pL*powf(sI0,2)*cos2U;
 		uK     = u    - 0.125*aux*(7*powf(cI0,2) - 1)*sin2U;
 		fK     = fS0  + 0.75 *aux*cI0*sin2U;
-		iK     = orbit_eqinc + 0.75 *aux*sI0*cI0*cos2U;
+		iK     = orbit.eqinc + 0.75 *aux*sI0*cI0*cos2U;
 	    cf = cos(fK); //cf
         sf = sin(fK); //sf
 	    ci = cos(iK); //cI
@@ -151,17 +168,48 @@ void sgp(orbit_t orbit, float *tVec, int nPts, float *x, float *y, float *z){
 	    pos[0] = -sf*ci; //M[0]
 	    pos[1] = cf*ci; //M[1]
 	    pos[2] = si; //M[2]
-	    pos3[0] = cf; //N[0]
-	    pos3[1] = sf; //N[1]
-	    pos3[2] = 0;    //N[2]
+	    pos2[0] = cf; //N[0]
+	    pos2[1] = sf; //N[1]
+	    pos2[2] = 0;    //N[2]
 	    cuk = cos(uK); //cUK
 	    suk = sin(uK); //sUK
-	    pos2[0] = pos[0]*suk+pos3[0]*cuk; //U
-	    pos2[1] = pos[1]*suk+pos3[1]*cuk;
-	    pos2[2] = pos[2]*suk+pos3[2]*cuk;
-	    x[k] = pos2[0]*rK*6378.135;
-	    y[k] = pos2[1]*rK*6378.135;
-	    z[k] = pos2[2]*rK*6378.135;
+	    pos3[0] = pos[0]*suk+pos2[0]*cuk; //U
+	    pos3[1] = pos[1]*suk+pos2[1]*cuk;
+	    pos3[2] = pos[2]*suk+pos2[2]*cuk;
+	    vel[0] = pos[0]*cuk-pos2[0]*suk;//V
+	    vel[1] = pos[1]*cuk-pos2[1]*suk;
+	    vel[2] = pos[2]*cuk-pos2[2]*suk;
+	    vx[k]= pos3[0]*rDot + rFDot*vel[0];
+	    vy[k]= pos3[1]*rDot + rFDot*vel[1];
+	    vz[k]= pos3[2]*rDot + rFDot*vel[2];
+	    x[k] = pos3[0]*rK*6378.135;
+	    y[k] = pos3[1]*rK*6378.135;
+	    z[k] = pos3[2]*rK*6378.135;
+
 	}
+	for(int i = 0; i<nPts; i++){
+	    xcoord[i] = x[i];
+	    ycoord[i] = y[i];
+	    zcoord[i] = z[i];
+	    xvel[i] = vx[i];
+	    yvel[i] = vy[i];
+	    zvel[i] = vz[i];
+	}
+
+}
+
+
+
+int checkposition(orbit_t orbit, int nPts, float actualunixtime, float latmax, float latmin, float lonmax, float lonmin){
+
+	float xcoord, ycoord, zcoord, xvel, yvel, zvel, lat, lon;
+
+	sgp(orbit, nPts, &xvel, &yvel, &zvel, &xcoord, &ycoord, &zcoord, actualunixtime);
+	lat = asind(zcoord/sqrt(pow(xcoord,2)+ pow(ycoord,2)+ pow(zcoord,2)));
+	lon = atan2d(ycoord,xcoord);
+	if( lat<= latmax && lat>= latmin && lon<=lonmax && lon>=lonmin){
+		return 1;
+	}
+	return 0;
 
 }

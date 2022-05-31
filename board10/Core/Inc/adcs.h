@@ -16,6 +16,8 @@
 
 #include "stm32f4xx_hal.h"
 #include "stdbool.h"
+#include "sgp.h"
+#include "optimal_request.h"
 
 typedef struct __attribute__ ((__packed__)) gyro_aux {
 	double gx_h;
@@ -36,37 +38,20 @@ typedef struct __attribute__ ((__packed__)) mag_data {
 }mag_data;
 
 typedef struct __attribute__ ((__packed__)) sun_vector {
-	uint32_t x1;
-	uint32_t x2;
-	uint32_t y1;
-	uint32_t y2;
-	uint32_t z1;
-	uint32_t z2;
+	uint32_t x;
+	uint32_t y;
+	uint32_t z;
 }sun_vector;
 
-typedef struct __attribute__ ((__packed__)) CalibSensorsData {
-	double gx_h;
-	double gy_h;
-	double gz_h;
-}CalibSensorsData;
 
-typedef struct __attribute__ ((__packed__)) SensorsData {
-	double gx_h;
-	double gy_h;
-	double gz_h;
-}SensorsData;
+typedef struct __attribute__ ((__packed__)) ControlData {
+	float quaternion_est[4];
+}ControlData;
 
-typedef struct Matrix3x3 {
-    float col1[3];
-    float col2[3];
-    float col3[3];
-}Matrix3x3;
 
-/*Detumble the satellite (ADCS subsystem)
- *Once it is stabilized, write detumble_state = true in the EEPROM memory */
-void detumble(I2C_HandleTypeDef *hi2c);
+void detumble(I2C_HandleTypeDef *hi2c1);
 
-void tumble(I2C_HandleTypeDef *hi2c);
+void tumble(I2C_HandleTypeDef *hi2c1);
 
 void AngularVelocity(I2C_HandleTypeDef *hi2c1, double *w);
 
@@ -82,17 +67,16 @@ double norm(double A[]);
 
 void CurrentToCoil(I2C_HandleTypeDef *hi2c1, double intensidad[3]);
 
-bool CheckGyro();
+bool checkGyro(I2C_HandleTypeDef *hi2c1);
 
 void decimal_to_binary(int n, char *res);
 
-void nadir_algorithm(I2C_HandleTypeDef *hi2c1, float euler[3], float q_est[4]);
-
-void matrix_prod3x3(Matrix3x3 *m1, Matrix3x3 *m2, Matrix3x3 *res);
+void nadir_algorithm(I2C_HandleTypeDef *hi2c1, ControlValues *control, float dtime, float *q_est, float *r_eci, float *v_eci);
 
 double gainConstant(void);
 
 void sensorData(I2C_HandleTypeDef *hi2c1, ADC_HandleTypeDef *hadc, mag_data *magData, gyro_data *gyroData, sun_vector *sunVector);
+
 
 
 #endif /* INC_ADCS_H_ */

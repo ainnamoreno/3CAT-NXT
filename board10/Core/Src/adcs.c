@@ -17,26 +17,14 @@
 #include "stdbool.h"
 #include "sgp.h"
 #include "stdlib.h"
+#include "matrix_utils.h"
+#include "optimal_request.h"
 
-#define PI 3.14159265359
+#define PI 3.14159265358979323846
+#define asind(x) (asin( x ) / PI * 180)
+#define atan2d(x,y) (atan2(x,y) / PI * 180)
 
 
-
-
-void matrix_prod3x3(Matrix3x3 *m1, Matrix3x3 *m2, Matrix3x3 *res)
-{
-    res->col1[0] = m1->col1[0]*m2->col1[0]+m1->col2[0]*m2->col1[1]+m1->col3[0]*m2->col1[2];
-    res->col1[1] = m1->col1[1]*m2->col1[0]+m1->col2[1]*m2->col1[1]+m1->col3[1]*m2->col1[2];
-    res->col1[2] = m1->col1[2]*m2->col1[0]+m1->col2[2]*m2->col1[1]+m1->col3[2]*m2->col1[2];
-
-    res->col2[0] = m1->col1[0]*m2->col2[0]+m1->col2[0]*m2->col2[1]+m1->col3[0]*m2->col2[2];
-    res->col2[1] = m1->col1[1]*m2->col2[0]+m1->col2[1]*m2->col2[1]+m1->col3[1]*m2->col2[2];
-    res->col2[2] = m1->col1[2]*m2->col2[0]+m1->col2[2]*m2->col2[1]+m1->col3[2]*m2->col2[2];
-
-    res->col3[0] = m1->col1[0]*m2->col3[0]+m1->col2[0]*m2->col3[1]+m1->col3[0]*m2->col3[2];
-    res->col3[1] = m1->col1[1]*m2->col3[0]+m1->col2[1]*m2->col3[1]+m1->col3[1]*m2->col3[2];
-    res->col3[2] = m1->col1[2]*m2->col3[0]+m1->col2[2]*m2->col3[1]+m1->col3[2]*m2->col3[2];
-}
 
 /**************************************************************************************
  *                                                                                    *
@@ -128,18 +116,23 @@ double gainConstant(void){
  **************************************************************************************/
 void detumble(I2C_HandleTypeDef *hi2c1) {
 
+	double k = gainConstant();
 	double gyr_read[3], mag_read[3], intensity[3], magneticDipole[3], w[3], m[3], a;
 	double maxMagneticDipole1 = 0.02359;
 	double maxMagneticDipole2 = 0.03234;
 	double maxIntensity1 = 0.14681;
 	double maxIntensity2 = 0.1495;
+	//shut down the magnetorquers to get a good reading of the magnetometers
+	CurrentToCoil(hi2c1, 0);
+	//read the data from the gyroscope
 	AngularVelocity(hi2c1, w);
+	//read the data from the magnetometer
 	MagneticField(hi2c1,m);
 	memcpy(gyr_read, w, 3);
 	memcpy(mag_read, m, 3);
+	//bdot algorithm
 	cross(mag_read,gyr_read, magneticDipole);
 	a = pow(norm(magneticDipole),2);
-	double k = gainConstant();
 	magneticDipole[0] = -k*magneticDipole[0]/a;
 	magneticDipole[1] = -k*magneticDipole[1]/a;
 	magneticDipole[2] = -k*magneticDipole[2]/a;
@@ -152,6 +145,7 @@ void detumble(I2C_HandleTypeDef *hi2c1) {
 
 	intensity[1] = (magneticDipole[1]*maxIntensity2)/maxMagneticDipole2;
 	intensity[2] = (magneticDipole[2]*maxIntensity2)/maxMagneticDipole2;
+	//pass the current to the magnetorquers
 	CurrentToCoil(hi2c1, intensity);
 
 
@@ -170,17 +164,21 @@ void detumble(I2C_HandleTypeDef *hi2c1) {
  **************************************************************************************/
 void tumble(I2C_HandleTypeDef *hi2c1) {
 
-	double k=0;
+	double k = gainConstant();
 	double gyr_read[3], mag_read[3], intensity[3], magneticDipole[3], w[3], m[3], a;
 	double maxMagneticDipole1 = 0.02359;
 	double maxMagneticDipole2 = 0.03234;
 	double maxIntensity1 = 0.14681;
 	double maxIntensity2 = 0.1495;
+	//shut down the magnetorquers to get a good reading of the magnetometers
+	CurrentToCoil(hi2c1, 0);
+	//read the data from the gyroscope
 	AngularVelocity(hi2c1, w);
+	//read the data from the magnetometer
 	MagneticField(hi2c1,m);
 	memcpy(gyr_read, w, 3);
 	memcpy(mag_read, m, 3);
-
+	//bdot algorithm
 	cross(mag_read,gyr_read, magneticDipole);
 	a = pow(norm(magneticDipole),2);
 	magneticDipole[0] = k*magneticDipole[0]/a;
@@ -195,6 +193,7 @@ void tumble(I2C_HandleTypeDef *hi2c1) {
 
 	intensity[1] = (magneticDipole[1]*maxIntensity2)/maxMagneticDipole2;
 	intensity[2] = (magneticDipole[2]*maxIntensity2)/maxMagneticDipole2;
+	//pass the current to the magnetorquers
 	CurrentToCoil(hi2c1, intensity);
 
 
@@ -239,44 +238,59 @@ void AngularVelocity(I2C_HandleTypeDef *hi2c1, double *w){
 void readPhotodiodes(ADC_HandleTypeDef *hadc, uint32_t *photoData) { // I think the four ADC should be passed as parameters
 
 	uint32_t data[6];
+	//conversion value, we have 3.3 volts and 14 bits of ADC
 	double conversionValue = 3.3/pow(2,14);
 	//Side 1
+	//choose the channel we want to read data from
 	HAL_ADC_ConfigChannel(hadc, 0);
 	HAL_ADC_Start(hadc);
+	//poll the ADC
 	HAL_ADC_PollForConversion(hadc, 1000);
+	//get the data from the ADC channel
 	data[0] = HAL_ADC_GetValue(hadc)*conversionValue;
 	HAL_ADC_Stop(hadc);
 	//Side 2
+	//choose the channel we want to read data from
 	HAL_ADC_ConfigChannel(hadc, 1);
 	HAL_ADC_Start(hadc);
 	HAL_ADC_PollForConversion(hadc, 1000);
+	//get the data from the ADC channel
 	data[1] = HAL_ADC_GetValue(hadc)*conversionValue;
 	HAL_ADC_Stop(hadc);
 	//Side 3
+	//choose the channel we want to read data from
 	HAL_ADC_ConfigChannel(hadc, 2);
 	HAL_ADC_Start(hadc);
 	HAL_ADC_PollForConversion(hadc, 1000);
+	//get the data from the ADC channel
 	data[2] = HAL_ADC_GetValue(hadc)*conversionValue;
 	HAL_ADC_Stop(hadc);
 	//Side 4
+	//choose the channel we want to read data from
 	HAL_ADC_ConfigChannel(hadc, 3);
 	HAL_ADC_Start(hadc);
 	HAL_ADC_PollForConversion(hadc, 1000);
+	//get the data from the ADC channel
 	data[3] = HAL_ADC_GetValue(hadc)*conversionValue;
 	HAL_ADC_Stop(hadc);
 	//Side 5
+	//choose the channel we want to read data from
 	HAL_ADC_ConfigChannel(hadc, 4);
 	HAL_ADC_Start(hadc);
 	HAL_ADC_PollForConversion(hadc, 1000);
+	//get the data from the ADC channel
 	data[4] = HAL_ADC_GetValue(hadc)*conversionValue;
 	HAL_ADC_Stop(hadc);
 	//Side 2
+	//choose the channel we want to read data from
 	HAL_ADC_ConfigChannel(hadc, 5);
 	HAL_ADC_Start(hadc);
 	HAL_ADC_PollForConversion(hadc, 1000);
+	//get the data from the ADC channel
 	data[5] = HAL_ADC_GetValue(hadc)*conversionValue;
 	HAL_ADC_Stop(hadc);
 
+	//assign the data from the photoDiodes to the output vector
 	photoData[0] = data[0];
 	photoData[1] = data[1];
 	photoData[2] = data[2];
@@ -293,7 +307,7 @@ void sunVector(ADC_HandleTypeDef *hadc, uint32_t *sunvector){
 
 	uint32_t *photodiodesData;
 	//get the vector containing the data from the photodiodes
-	readPhotodiodes(&hadc, photodiodesData);
+	readPhotodiodes(&hadc, &photodiodesData);
 	//compute the sunvector
 	//if the photodiodesData[0], which is the positive X side, is > than photodiodesData[3]
 	//which is the negative X side, we obtain the value of the photodiodesData[0]
@@ -308,11 +322,13 @@ void sunVector(ADC_HandleTypeDef *hadc, uint32_t *sunvector){
 }
 
 
-bool CheckGyro(I2C_HandleTypeDef *hi2c1){
+bool checkGyro(I2C_HandleTypeDef *hi2c1){
 
 	double gyr_read[3], v[3];
+	//get the data from the gyroscope
 	AngularVelocity(hi2c1, v);
 	memcpy(gyr_read, v, 3);
+	//if the gyroscope values are less than 0.5 we will assume that the satellite has no angular velocity
 	if( gyr_read[0]<=0.5 && gyr_read[1]<=0.5 && gyr_read[2]<=0.5 ){
 		return true;
 	}
@@ -359,178 +375,125 @@ void CurrentToCoil(I2C_HandleTypeDef *hi2c1, double intensidad[3]){
 
 
 	int auxCurrent[3];
-	char *currentToApply, *data_1, *data_2, *signCurrent;
+	char *currentToApply, *data_1, *data_2, *signCurrent, address_x, address_y, address_z;
 	char finalCurrent[16] = {1,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0};
+	//conversion value, 1023 is the max value of intensity as the data is a 10 bits bus
+	//0.150 is the max output intensity
 	auxCurrent[0]=round(intensidad[0]*1023/0.150);
 	auxCurrent[1]=round(intensidad[1]*1023/0.150);
 	auxCurrent[2]=round(intensidad[2]*1023/0.150);
 	uint8_t data[4] = {0x66, 0x00, 0x00, 0x90};
 
-//	uint8_t st = 100;
-//	uint8_t tm = 101;
-//	uint8_t pd = 1;
-//	uint16_t current = 1023;
-//	uint8_t buffer[3];
-//	memcpy(buffer, (tm<<2) | (st<<5) | (current<<12) | (pd<<23), 4);
 
+	if(sign(auxCurrent[0])<=0){
 
-	if(auxCurrent[0]>0){//LV1
-
-		decimal_to_binary(auxCurrent[0], currentToApply);
-		for(int i=0; i<10;i++){
-			finalCurrent[i+2] = currentToApply[i];
-			data_1[i] = finalCurrent[i];
-
-		}
-		for(int j=0; j<4; j++){
-			data_2[j] = finalCurrent[j+8];
-		}
-		data[1] = (uint8_t)*data_1;
-		data[2] = (uint8_t)*data_2;
-		HAL_I2C_Master_Transmit_DMA(hi2c1, 0x70<<1, data, 4);
-
-
-	}else{//LV6
-
+		// -x side
 		signCurrent[0] = sign(auxCurrent[0])*auxCurrent[0];
+		//convert the decimal number to binary
 		decimal_to_binary(signCurrent[0], currentToApply);
-		for(int i=0; i<10;i++){
-			finalCurrent[i+2] = currentToApply[i];
-			data_1[i] = finalCurrent[i];
+		//address of the driver
+		address_x = 0x75<<1;
 
-		}
-		for(int j=0; j<4; j++){
-			data_2[j] = finalCurrent[j+8];
-		}
-		data[1] = (uint8_t)*data_1;
-		data[2] = (uint8_t)*data_2;
-		HAL_I2C_Master_Transmit_DMA(hi2c1, 0x75<<1, data, 4);
-
-	}
-	if(auxCurrent[1]>0){//LV2
-
-		decimal_to_binary(auxCurrent[1], currentToApply);
-		for(int i=0; i<10;i++){
-			finalCurrent[i+2] = currentToApply[i];
-			data_1[i] = finalCurrent[i];
-
-		}
-		for(int j=0; j<4; j++){
-			data_2[j] = finalCurrent[j+8];
-		}
-		data[1] = (uint8_t)*data_1;
-		data[2] = (uint8_t)*data_2;
-
-		HAL_I2C_Master_Transmit_DMA(hi2c1, 0x71<<1, data, 4);
-
-	}else{//LV3
-
-		signCurrent[1] = sign(auxCurrent[1])*auxCurrent[1];
-		decimal_to_binary(signCurrent[1], currentToApply);
-		for(int i=0; i<10;i++){
-			finalCurrent[i+2] = currentToApply[i];
-			data_1[i] = finalCurrent[i];
-
-		}
-		for(int j=0; j<4; j++){
-			data_2[j] = finalCurrent[j+8];
-		}
-		data[1] = (uint8_t)*data_1;
-		data[2] = (uint8_t)*data_2;
-		HAL_I2C_Master_Transmit_DMA(hi2c1, 0x72<<1, data, 4);
-
-	}
-	if(auxCurrent[2]>0){//LV5
-
-		decimal_to_binary(auxCurrent[2], currentToApply);
-		for(int i=0; i<10;i++){
-			finalCurrent[i+2] = currentToApply[i];
-			data_1[i] = finalCurrent[i];
-
-		}
-		for(int j=0; j<4; j++){
-			data_2[j] = finalCurrent[j+8];
-		}
-		data[1] = (uint8_t)*data_1;
-		data[2] = (uint8_t)*data_2;
-		HAL_I2C_Master_Transmit_DMA(hi2c1, 0x74<<1, data, 4);
-
-	}else{//LV4
-
-		signCurrent[2] = sign(auxCurrent[2])*auxCurrent[2];
-		decimal_to_binary(signCurrent[1], currentToApply);
-		for(int i=0; i<10;i++){
-			finalCurrent[i+2] = currentToApply[i];
-			data_1[i] = finalCurrent[i];
-
-		}
-		for(int j=0; j<4; j++){
-			data_2[j] = finalCurrent[j+8];
-		}
-		data[1] = (uint8_t)*data_1;
-		data[2] = (uint8_t)*data_2;
-		HAL_I2C_Master_Transmit_DMA(hi2c1, 0x73<<1, data, 4);
-
-	}
-
-
-
-
-}
-
-
-void nadir_algorithm(I2C_HandleTypeDef *hi2c1, float euler[3], float angle0[2]){
-
-	double gyr_read[3], mag_read[3], intensity[3], magneticDipole[3], w[3], m[3], a;
-	double kp[3] = {5.49359905270580e-06, 3.80118411237760e-06, 8.02831030719022e-14};
-	double kd[3] = {0.000206390535670685, 0.000156635557926080, 5.39645941623300e-08};
-	double maxMagneticDipole1 = 0.02359;
-	double maxMagneticDipole2 = 0.03234;
-	double maxIntensity1 = 0.14681;
-	double maxIntensity2 = 0.1495;
-	angle0[0] = 0;//desired angle
-	angle0[1] = 0;//desired angle
-	float angle_e[3];
-	double idealTorque[3] = {0, 0, 0};
-
-	angle_e[0] = &euler[3]-angle0;//angle error
-	angle_e[1] = &euler[2]-angle0;
-	angle_e[2] = 0;
-	AngularVelocity(hi2c1, w);
-	MagneticField(hi2c1,m);
-	memcpy(gyr_read, w, 3);
-	memcpy(mag_read, m, 3);
-
-	idealTorque[0] = -(kp[0]*angle_e[0]+kd[0]*gyr_read[0]*180/PI);
-	idealTorque[1] = -(kp[1]*angle_e[1]+kd[1]*gyr_read[1]*180/PI);
-	idealTorque[2] = -(kp[2]*angle_e[2]+kd[2]*gyr_read[2]*180/PI);
-	cross(mag_read,idealTorque, magneticDipole);
-	a = pow(norm(magneticDipole),2);
-	magneticDipole[0] = magneticDipole[0]/a;
-	magneticDipole[1] = magneticDipole[1]/a;
-	magneticDipole[2] = magneticDipole[2]/a;
-	if(magneticDipole[0]>0){
-		intensity[0] = (magneticDipole[0]*maxIntensity1)/maxMagneticDipole1;
 	}else{
-		intensity[0] = (magneticDipole[0]*maxIntensity2)/maxMagneticDipole2;
+		// +x side
+		//convert the decimal number to binary
+		decimal_to_binary(auxCurrent[0], currentToApply);
+		//address of the driver
+		address_x= 0x70<<1;
 	}
+	for(int i=0; i<10;i++){
+		finalCurrent[i+2] = currentToApply[i];
+		//assign the first 10 bits to the first data bus
+		data_1[i] = finalCurrent[i];
 
-	intensity[1] = (magneticDipole[1]*maxIntensity2)/maxMagneticDipole2;
-	intensity[2] = (magneticDipole[2]*maxIntensity2)/maxMagneticDipole2;
-	CurrentToCoil(hi2c1, intensity);
+	}
+	for(int j=0; j<4; j++){
+		//assign the last 4 bits to the second data bus
+		data_2[j] = finalCurrent[j+8];
+	}
+	data[1] = (uint8_t)*data_1;
+	data[2] = (uint8_t)*data_2;
+	HAL_I2C_Master_Transmit_DMA(hi2c1, address_x, data, 4);
+
+
+	if(sign(auxCurrent[1])<=0){
+
+		// -y side
+		signCurrent[1] = sign(auxCurrent[1])*auxCurrent[1];
+		//convert the decimal number to binary
+		decimal_to_binary(signCurrent[1], currentToApply);
+		//address of the driver
+		address_y = 0x72<<1;
+
+	}else{
+		// +y side
+		//convert the decimal number to binary
+		decimal_to_binary(auxCurrent[1], currentToApply);
+		//address of the driver
+		address_y = 0x71<<1;
+	}
+	for(int i=0; i<10;i++){
+		//assign the first 10 bits to the first data bus
+		finalCurrent[i+2] = currentToApply[i];
+		data_1[i] = finalCurrent[i];
+
+	}
+	for(int j=0; j<4; j++){
+		//assign the last 4 bits to the second data bus
+		data_2[j] = finalCurrent[j+8];
+	}
+	data[1] = (uint8_t)*data_1;
+	data[2] = (uint8_t)*data_2;
+	HAL_I2C_Master_Transmit_DMA(hi2c1, address_y, data, 4);
+
+
+	if(sign(auxCurrent[2])<=0){
+
+		// -z side
+		signCurrent[1] = sign(auxCurrent[2])*auxCurrent[2];
+		//convert the decimal number to binary
+		decimal_to_binary(signCurrent[2], currentToApply);
+		//address of the driver
+		address_z = 0x73<<1;
+
+	}else{
+		// +z side
+		//convert the decimal number to binary
+		decimal_to_binary(auxCurrent[2], currentToApply);
+		//address of the driver
+		address_z = 0x74<<1;
+	}
+	for(int i=0; i<10;i++){
+		//assign the first 10 bits to the first data bus
+		finalCurrent[i+2] = currentToApply[i];
+		data_1[i] = finalCurrent[i];
+
+	}
+	for(int j=0; j<4; j++){
+		//assign the last 4 bits to the second data bus
+		data_2[j] = finalCurrent[j+8];
+	}
+	data[1] = (uint8_t)*data_1;
+	data[2] = (uint8_t)*data_2;
+
+	HAL_I2C_Master_Transmit_DMA(hi2c1, address_z, data, 4);
 
 }
 
-void sensorData(I2C_HandleTypeDef *hi2c1, ADC_HandleTypeDef *hadc, mag_data *magData, gyro_data *gyroData, sun_vector *sunVector){
+
+
+
+void sensorData(I2C_HandleTypeDef *hi2c1, ADC_HandleTypeDef *hadc, mag_data *magData, gyro_data *gyroData, sun_vector *sunvector){
 
 	double w[3], m[3];
-	uint32_t data[6];
+	uint32_t *data;
+	CurrentToCoil(hi2c1, 0);
 	//get data from gyroscope
 	AngularVelocity(hi2c1, w);
 	//get data from magnetometer
 	MagneticField(hi2c1, m);
 	//get data from the photodiodes
-	readPhotodiodes(hadc, data);
+	sunVector(hadc, data);
 	//save the values from the gyroscope
 	gyroData->gx = w[0];
 	gyroData->gy = w[1];
@@ -540,16 +503,103 @@ void sensorData(I2C_HandleTypeDef *hi2c1, ADC_HandleTypeDef *hadc, mag_data *mag
 	magData->my = m[1];
 	magData->mz = m[2];
 	//save the values from the photodiodes
-	sunVector->x1 = data[0];
-	sunVector->x2 = data[1];
-	sunVector->y1 = data[2];
-	sunVector->y2 = data[3];
-	sunVector->z1 = data[4];
-	sunVector->z2 = data[5];
+	sunvector->x = data[0];
+	sunvector->y = data[1];
+	sunvector->z = data[2];
 
 }
 
 
 
 
+void nadir_algorithm(I2C_HandleTypeDef *hi2c1, ControlValues *control, float dtime, float *q_est, float *r_eci, float *v_eci)
+{
+    ControlData	control_data;
+    CalibSensorsData  calib_sens_data;
+	float maxMagneticDipole1 = 0.02359;
+	float maxMagneticDipole2 = 0.03234;
+	float maxIntensity1 = 0.14681;
+	float maxIntensity2 = 0.1495;
+    volatile float angle_target[2] = {0.0f,0.0f}, angle_error[3], angle_der[2];
+    volatile float w_target[3], w_error[3], w_der[3], torque_ideal[3], kp_w[3], mag_moment[3], w_actual[3];
+    float  mtq_c_t_calibration[3], norm, norm2, euler[3],q_e2o[3], mag_read[3], intensity[3];
+    static float w_error_prev[3], angle_error_prev[3] = {0.0f,0.0f,0.0f};
 
+    poseci2Quat(r_eci, v_eci, q_e2o);
+    estimated_quat2euler(euler, q_est, q_e2o);
+
+    mag_read[0] = calib_sens_data.mag_cal1[0]*1E-9;
+    mag_read[1] = calib_sens_data.mag_cal1[1]*1E-9;
+    mag_read[2] = calib_sens_data.mag_cal1[2]*1E-9;
+
+	angle_error[0] = euler[2] - angle_target[0];
+	angle_error[1] = euler[1] - angle_target[1];
+	angle_error[2] = 0;
+	if(angle_error_prev[2] == 0){
+		angle_error_prev[2] = 1;
+	} else {
+		angle_der[0] = (angle_error[0] - angle_error_prev[0])/dtime;
+		angle_der[1] = (angle_error[1] - angle_error_prev[1])/dtime;
+		w_target[0] = control->nadir_kp_angle[0]*angle_error[0] + control->nadir_kd_angle[0]*angle_der[0];
+		w_target[1] = control->nadir_kp_angle[1]*angle_error[1] + control->nadir_kd_angle[1]*angle_der[1];
+		w_target[2] = 0;
+
+		w_actual[0] = calib_sens_data.gyro_cal[0];
+		w_actual[1] = calib_sens_data.gyro_cal[1];
+		w_actual[2] = calib_sens_data.gyro_cal[2];
+
+		if((w_actual[2]) >40 || (w_actual[2])<-40) {
+			kp_w[0] = 1E-3;
+			kp_w[1] = 1E-3;
+			kp_w[2] = 9E-5;
+		} else {
+			kp_w[0] = control->nadir_kp_w[0];
+			kp_w[1] = control->nadir_kp_w[1];
+			kp_w[2] = control->nadir_kp_w[2];
+		}
+
+		w_error[0] = w_target[0] - w_actual[0];
+		w_error[1] = w_target[1] - w_actual[1];
+		w_error[2] = w_target[2] - w_actual[2];
+		w_der[0] = (w_error[0] - w_error_prev[0])/dtime;
+		w_der[1] = (w_error[1] - w_error_prev[1])/dtime;
+		w_der[2] = (w_error[2] - w_error_prev[2])/dtime;
+
+		torque_ideal[0] = -(kp_w[0]*w_error[0] + control->nadir_kd_w[0]*w_der[0]);
+		torque_ideal[1] = -(kp_w[1]*w_error[1] + control->nadir_kd_w[1]*w_der[1]);
+		torque_ideal[2] = -(kp_w[2]*w_error[2] + control->nadir_kd_w[2]*w_der[2]);
+
+
+		cross_product(torque_ideal, mag_read, mag_moment);
+		norm = float_norm(mag_read);
+		norm2 = 1/(norm*norm);
+
+		mag_moment[0] = mag_moment[0]*norm2;
+		mag_moment[1] = mag_moment[1]*norm2;
+		mag_moment[2] = mag_moment[2]*norm2;
+
+		if(mag_moment[0]>0){
+			intensity[0] = (mag_moment[0]*maxIntensity1)/maxMagneticDipole1;
+		}else{
+			intensity[0] = (mag_moment[0]*maxIntensity2)/maxMagneticDipole2;
+		}
+
+		intensity[1] = (mag_moment[1]*maxIntensity2)/maxMagneticDipole2;
+		intensity[2] = (mag_moment[2]*maxIntensity2)/maxMagneticDipole2;
+
+		CurrentToCoil(hi2c1, intensity);
+
+
+		control_data.quaternion_est[0] = q_est[0];
+		control_data.quaternion_est[1] = q_est[1];
+		control_data.quaternion_est[2] = q_est[2];
+		control_data.quaternion_est[3] = q_est[3];
+
+		w_error_prev[0] = w_error[0];
+		w_error_prev[1] = w_error[1];
+		w_error_prev[2] = w_error[2];
+	}
+	angle_error_prev[0]=angle_error[0];
+	angle_error_prev[1]=angle_error[1];
+
+}
