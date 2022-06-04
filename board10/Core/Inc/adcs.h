@@ -57,7 +57,7 @@ void AngularVelocity(I2C_HandleTypeDef *hi2c1, double *w);
 
 void readPhotodiodes(ADC_HandleTypeDef *hadc, uint32_t photoData[6]);
 
-void sunVector(ADC_HandleTypeDef *hadc, uint32_t *sunvector);
+void sunVector(ADC_HandleTypeDef *hadc, uint32_t *sunvector, uint32_t *theta, uint32_t *phi);
 
 void MagneticField(I2C_HandleTypeDef *hi2c1, double *m);
 
