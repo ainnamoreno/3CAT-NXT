@@ -76,30 +76,17 @@ static void MX_USB_OTG_FS_HCD_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
+int main()
 {
 
-	double jd;
-	vec3 xsat, mageci, magecef, magenu;
-	double x, y, z;
-	double jday = 2459695.5;
-	double year, month, day, hour, minute, second;
-	year = 2022;
-	month = 4;
-	day = 26;
-	hour =9;
-	minute = 33;
-	second = 31;
-	xsat.raw[0] = 40;
-	xsat.raw[1] = 0;
-	xsat.raw[2] = 300000;
-
-	jd = 367 * year - floor (7 * (year + floor ((month + 9) / 12)) / 4) + floor (275 * month / 9) + day + 1721013.5 + hour / 24 + minute / 1440 + second / 86400;
-
-	igrf12_ngdc(jd, xsat, &mageci, &magecef, &magenu);
 
 
+   return 0;
 }
+
+
+
+
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};

@@ -22,6 +22,7 @@
 
 #define PI 3.14159265358979323846
 #define asind(x) (asin( x ) / PI * 180)
+#define sind(x) (sin( x ) / PI * 180)
 #define atan2d(x,y) (atan2(x,y) / PI * 180)
 
 
@@ -216,7 +217,7 @@ void AngularVelocity(I2C_HandleTypeDef *hi2c1, double *w){
 	HAL_I2C_Master_Transmit(hi2c1, 0x68<<1, 0x47, 1, 1000);
 	HAL_I2C_Master_Receive(hi2c1, 0x68<<1, gz, 2, 1000);
 	gyrox.gz_h = (double)((uint8_t)gz[0]<<8|gz[1]);
-	//After we have readed the data from the gyro we have to divide by 131
+	//After we have read the data from the gyro we have to divide by 131
 	//Check the datasheet for more information
 	w[0] = gyrox.gx_h/s;
 	w[1] = gyrox.gy_h/s;
@@ -303,7 +304,7 @@ void readPhotodiodes(ADC_HandleTypeDef *hadc, uint32_t *photoData) { // I think 
 
 }
 
-void sunVector(ADC_HandleTypeDef *hadc, uint32_t *sunvector){
+void sunVector(ADC_HandleTypeDef *hadc, uint32_t *sunvector, uint32_t *phi, uint32_t *theta){
 
 	uint32_t *photodiodesData;
 	//get the vector containing the data from the photodiodes
@@ -318,6 +319,9 @@ void sunVector(ADC_HandleTypeDef *hadc, uint32_t *sunvector){
 	else sunvector[1] = -photodiodesData[4];
 	if(photodiodesData[2]>photodiodesData[5]) sunvector[2] = photodiodesData[2];
 	else sunvector[2] = -photodiodesData[5];
+	phi = atan2d(sunvector[1]/sunvector[0]);
+	theta = atan2d(sunvector[1]/(sunvector[2]*sind(phi)));
+
 
 }
 

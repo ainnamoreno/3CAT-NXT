@@ -9,38 +9,26 @@
 #include "igrf13.h"
 #include "optimal_request.h"
 
-uint32_t received_value = 0;
-uint32_t CONTINGENCY_NOTI = 0;
-uint32_t DETUMBLING_NOTI = 0;
-uint32_t TUMBLING_NOTI = 0;
-uint32_t portMAX_DELAY = 0;
-uint32_t ULONG_MAX = 0;
-uint32_t GS_NOTI = 0;
-uint32_t NOTGS_NOTI = 0;
-uint32_t POINTING_NOTI = 0;
-uint32_t OBC_task = 0;
-uint32_t TLE_NOTI;
+uint32_t received_value;
 orbit_t orbit;
 tle_data tle;
-int nPts;
-float *xcoord, *ycoord, *zcoord, *r_eci, *v_eci, *xvel, *yvel, *zvel, lat, lon;
-float actualunixtime, latmax, latmin, lonmax, lonmin, eSetBits, jday, *q_est, actual_time, dtime, previous_time;
+int nPts, checkPositionValue;
+float *xcoord, *ycoord, *zcoord, *r_eci, *v_eci, *xvel, *yvel, *zvel, lat, lon, actualunixtime, latmax, latmin, lonmax, lonmin, eSetBits, jday, *q_est, actual_time, dtime, previous_time;
 
-int checkPositionValue;
 ControlValues *control;
-I2C_HandleTypeDef *hi2c1 = 0;
-ADC_HandleTypeDef *hadc = 0;
-mag_data *magData = 0;
-gyro_data *gyroData = 0;
-sun_vector *sunvector = 0;
-RTC_HandleTypeDef *hrtc = 0;
+I2C_HandleTypeDef *hi2c1;
+ADC_HandleTypeDef *hadc;
+mag_data *magData;
+gyro_data *gyroData;
+sun_vector *sunvector;
+RTC_HandleTypeDef *hrtc;
 
 void ADCSTask(void *pvParameters) {
 
 	while(received_value != CONTINGENCY_NOTI){
 		for (;;) {
 
-			sensorData(hi2c1, hadc, magData, gyroData, sunvector);
+
 			// Constantly checking the sat position
 			checkPositionValue = checkposition(orbit, 2, actualunixtime, latmax, latmin, lonmax, lonmin);
 			// if in the contact region
